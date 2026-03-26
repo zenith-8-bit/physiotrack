@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhysioTrack - Doctor Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>PhysioTrack Doctor Portal</h1>
+        <nav>
+            <ul>
+                <li><a href="#patient-management">Patient Management</a></li>
+                <li><a href="#exercise-scheduling">Exercise Scheduling</a></li>
+                <li><a href="#qr-device-linking">QR Device Linking</a></li>
+                <li><a href="#compliance-tracking">Compliance Tracking</a></li>
+                <li><a href="#activity-timeline">Activity Timeline</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="patient-management">
+            <h2>Patient Management</h2>
+            <button onclick="openModal('addPatientModal')">Add Patient</button>
+            <div class="patient-list">
+                <h3>Existing Patients</h3>
+                <ul id="patients">
+                    <!-- Patient items will be populated here -->
+                </ul>
+            </div>
+            <div class="modal" id="addPatientModal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('addPatientModal')">&times;</span>
+                    <h3>Add New Patient</h3>
+                    <form id="addPatientForm">
+                        <label for="patientName">Name:</label><br>
+                        <input type="text" id="patientName" name="patientName" required><br>
+                        <label for="patientEmail">Email:</label><br>
+                        <input type="email" id="patientEmail" name="patientEmail" required><br>
+                        <input type="submit" value="Add Patient">
+                    </form>
+                </div>
+            </div>
+        </section>
+        <section id="exercise-scheduling">
+            <h2>Exercise Scheduling</h2>
+            <button onclick="openModal('scheduleExerciseModal')">Schedule Exercise</button>
+            <div class="modal" id="scheduleExerciseModal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('scheduleExerciseModal')">&times;</span>
+                    <h3>Schedule Exercise</h3>
+                    <form id="scheduleExerciseForm">
+                        <label for="exerciseName">Exercise Name:</label><br>
+                        <input type="text" id="exerciseName" name="exerciseName" required><br>
+                        <label for="exerciseDate">Date:</label><br>
+                        <input type="date" id="exerciseDate" name="exerciseDate" required><br>
+                        <label for="exerciseTime">Time:</label><br>
+                        <input type="time" id="exerciseTime" name="exerciseTime" required><br>
+                        <input type="submit" value="Schedule Exercise">
+                    </form>
+                </div>
+            </div>
+        </section>
+        <section id="qr-device-linking">
+            <h2>QR Device Linking</h2>
+            <button onclick="openModal('linkQRModal')">Link QR Device</button>
+            <div class="modal" id="linkQRModal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('linkQRModal')">&times;</span>
+                    <h3>Link QR Device</h3>
+                    <form id="linkQRForm">
+                        <label for="qrCode">QR Code:</label><br>
+                        <input type="text" id="qrCode" name="qrCode" required><br>
+                        <input type="submit" value="Link Device">
+                    </form>
+                </div>
+            </div>
+        </section>
+        <section id="compliance-tracking">
+            <h2>Compliance Tracking</h2>
+            <div class="compliance-list">
+                <h3>Compliance Data</h3>
+                <ul id="complianceData">
+                    <!-- Compliance data items will be populated here -->
+                </ul>
+            </div>
+        </section>
+        <section id="activity-timeline">
+            <h2>Activity Timeline</h2>
+            <div class="timeline">
+                <h3>Your Activities</h3>
+                <ul id="activityTimeline">
+                    <!-- Timeline items will be populated here -->
+                </ul>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 PhysioTrack. All rights reserved.</p>
+    </footer>
+</body>
+</html>
