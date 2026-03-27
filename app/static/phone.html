@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PhysioAI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: rgba(255,255,255,0.07);
+  --accent: #00d4aa;
+  --accent2: #4f8ef7;
+  --accent3: #ff6b6b;
+  --accent4: #f59e0b;
+  --text: #f0f4ff;
+  --text2: #8899b8;
+  --text3: #556070;
+  --nav-h: 72px;
+  --sidebar-w: 80vw;
+  --radius: 16px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+/* ===== APP SHELL ===== */
+.app { height: 100dvh; display: flex; flex-direction: column; position: relative; }
+
+/* ===== TOP BAR ===== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 10px;
+  position: relative; z-index: 10;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.hamburger-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; width: 40px; height: 40px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  cursor: pointer; flex-shrink: 0;
+}
+.hamburger-btn span {
+  display: block; width: 18px; height: 2px;
+  background: var(--text); border-radius: 2px; transition: 0.3s;
+}
+.topbar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.topbar-title em { color: var(--accent); font-style: normal; }
+.topbar-right { display: flex; gap: 8px; }
+.topbar-badge {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 10px; font-size: 11px;
+  color: var(--text2); font-family: var(--mono);
+}
+.alert-dot {
+  width: 8px; height: 8px; background: var(--accent3);
+  border-radius: 50%; position: absolute; top: -2px; right: -2px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ===== PANELS ===== */
+.panel {
+  display: none; flex: 1; overflow-y: auto;
+  padding: 0 16px 100px; animation: panelIn 0.25s ease;
+}
+.panel.active { display: block; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 24px);
+  background: rgba(17,24,39,0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 22px; height: var(--nav-h);
+  display: flex; align-items: center;
+  z-index: 100; overflow: hidden;
+}
+.nav-btn {
+  flex: 1; background: none; border: none;
+  color: var(--text3); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 10px; font-family: var(--font); font-weight: 500;
+  padding: 10px 4px; transition: 0.2s; position: relative;
+}
+.nav-btn svg { width: 22px; height: 22px; stroke-width: 1.8; transition: 0.2s; }
+.nav-btn.active { color: var(--accent); }
+.nav-btn.active svg { stroke: var(--accent); }
+.nav-btn.active::before {
+  content: '';
+  position: absolute; top: 0; left: 20%; right: 20%; height: 2px;
+  background: var(--accent); border-radius: 0 0 4px 4px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200; opacity: 0; pointer-events: none; transition: 0.3s;
+  backdrop-filter: blur(4px);
+}
+.sidebar-overlay.open { opacity: 1; pointer-events: all; }
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w); max-width: 340px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  z-index: 201; transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column; padding: 24px 20px;
+  overflow-y: auto;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.sidebar-logo { font-size: 22px; font-weight: 700; }
+.sidebar-logo em { color: var(--accent); font-style: normal; }
+.sidebar-close {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text2);
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.sidebar-nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  color: var(--text2); font-weight: 500; transition: 0.2s; margin-bottom: 4px;
+}
+.sidebar-nav-item:hover, .sidebar-nav-item.active { background: var(--surface2); color: var(--text); }
+.sidebar-nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* Emergency Alert Box */
+.emergency-box {
+  background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(245,158,11,0.1));
+  border: 1px solid rgba(255,107,107,0.3);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+}
+.emergency-box h5 { color: var(--accent3); font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.emergency-msg {
+  background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px 12px;
+  margin-bottom: 8px; cursor: pointer;
+}
+.emergency-msg .em-time { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.emergency-msg .em-text { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.emergency-msg .em-text b { color: var(--accent3); }
+.expand-btn { font-size: 11px; color: var(--accent); text-decoration: none; cursor: pointer; }
+
+.sidebar-qr-btn {
+  width: 100%; padding: 14px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none; color: #000; font-weight: 700; font-size: 14px;
+  cursor: pointer; margin-top: auto; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+/* ===== DAILY ACTIVITY PANEL ===== */
+.panel-head { margin-bottom: 20px; }
+.panel-head h2 { font-size: 26px; font-weight: 700; letter-spacing: -1px; }
+.panel-head p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+.day-progress-ring { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.ring-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--surface2); stroke-width: 6; }
+.ring-fg { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.ring-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+.ring-inner span { font-size: 15px; font-weight: 700; color: var(--accent); }
+.ring-inner small { font-size: 9px; color: var(--text3); }
+.day-progress-info h3 { font-size: 17px; font-weight: 700; }
+.day-progress-info p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.day-chips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.chip {
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  border: 1px solid; display: inline-flex; align-items: center; gap: 4px;
+}
+.chip.green { color: var(--accent); border-color: var(--accent); background: rgba(0,212,170,0.1); }
+.chip.blue { color: var(--accent2); border-color: var(--accent2); background: rgba(79,142,247,0.1); }
+.chip.orange { color: var(--accent4); border-color: var(--accent4); background: rgba(245,158,11,0.1); }
+
+.timeline { margin-top: 4px; }
+.timeline-label { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+.ex-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 14px;
+}
+.ex-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent);
+}
+.ex-card.done::before { background: var(--text3); }
+.ex-card.upcoming::before { background: var(--accent2); }
+.ex-card:active { transform: scale(0.98); }
+.ex-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: var(--surface2); display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.ex-icon.done { opacity: 0.5; }
+.ex-info { flex: 1; }
+.ex-info h4 { font-size: 15px; font-weight: 600; }
+.ex-info p { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.ex-meta { display: flex; gap: 8px; margin-top: 6px; }
+.ex-tag {
+  font-size: 10px; padding: 2px 8px; border-radius: 6px;
+  background: var(--surface2); color: var(--text2); font-family: var(--mono);
+}
+.ex-status {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ex-status.done { background: rgba(255,255,255,0.05); color: var(--text3); }
+.ex-status.active { background: rgba(0,212,170,0.15); color: var(--accent); animation: pulse 2s infinite; }
+.ex-status.upcoming { background: rgba(79,142,247,0.1); color: var(--accent2); }
+
+/* ===== EXERCISE SESSION MODAL ===== */
+.ex-modal {
+  position: fixed; inset: 0; background: var(--bg);
+  z-index: 300; transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+}
+.ex-modal.open { transform: translateX(0); }
+.ex-modal-top {
+  padding: 16px;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+  position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; align-items: center; gap: 12px;
+}
+.ex-back-btn {
+  background: rgba(0,0,0,0.5); border: 1px solid var(--border);
+  border-radius: 12px; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text);
+}
+.ex-modal-title { font-size: 16px; font-weight: 700; }
+.ex-modal-subtitle { font-size: 11px; color: var(--text2); }
+
+/* Camera half */
+.camera-half {
+  height: 50vh; background: #000; position: relative; overflow: hidden; flex-shrink: 0;
+}
+.camera-half video { width: 100%; height: 100%; object-fit: cover; }
+.cam-placeholder {
+  width: 100%; height: 100%; background: linear-gradient(135deg, #0d1520, #1a2535);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+}
+.cam-icon { font-size: 48px; opacity: 0.3; }
+.cam-label { font-size: 13px; color: var(--text3); }
+.pose-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.pose-box {
+  position: absolute; top: 20%; left: 20%; right: 20%; bottom: 10%;
+  border: 2px solid rgba(0,212,170,0.7);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,212,170,0.2), inset 0 0 20px rgba(0,212,170,0.05);
+}
+.pose-corner {
+  position: absolute; width: 16px; height: 16px;
+  border-color: var(--accent);
+  border-style: solid;
+}
+.pose-corner.tl { top: -1px; left: -1px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.pose-corner.tr { top: -1px; right: -1px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.pose-corner.bl { bottom: -1px; left: -1px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.pose-corner.br { bottom: -1px; right: -1px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+.cam-live-badge {
+  position: absolute; top: 60px; left: 12px;
+  background: rgba(255,107,107,0.9); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+  display: flex; align-items: center; gap: 5px; font-family: var(--mono);
+  letter-spacing: 1px;
+}
+.cam-live-dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: pulse 1s infinite; }
+.cam-metric {
+  position: absolute; background: rgba(0,0,0,0.7);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 6px 10px; font-size: 11px; font-family: var(--mono);
+}
+.cam-metric.top-right { top: 60px; right: 12px; color: var(--accent); }
+.cam-metric.bottom-left { bottom: 12px; left: 12px; color: var(--accent4); }
+.cam-metric.bottom-right { bottom: 12px; right: 12px; color: var(--accent2); }
+.cam-metric span { display: block; font-size: 9px; color: var(--text3); margin-bottom: 2px; }
+.cam-ai-prompt {
+  position: absolute; left: 12px; right: 12px; bottom: 48px;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,212,170,0.3); border-radius: 12px;
+  padding: 10px 14px;
+}
+.cam-ai-prompt p { font-size: 13px; color: var(--text); line-height: 1.4; }
+.cam-ai-prompt small { font-size: 10px; color: var(--accent); font-weight: 600; }
+
+/* Data half */
+.data-half {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.gyro-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.gyro-card h5 { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.gyro-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.gyro-axis {
+  background: var(--surface2); border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.gyro-axis-label { font-size: 10px; font-family: var(--mono); color: var(--text3); margin-bottom: 4px; }
+.gyro-axis-val { font-size: 16px; font-weight: 700; font-family: var(--mono); }
+.gyro-axis-val.x { color: var(--accent3); }
+.gyro-axis-val.y { color: var(--accent); }
+.gyro-axis-val.z { color: var(--accent2); }
+.gyro-bar-wrap { margin-top: 10px; }
+.gyro-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.gyro-bar-row span { font-size: 10px; font-family: var(--mono); width: 14px; color: var(--text3); }
+.gyro-bar { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.gyro-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+.rep-counter {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; text-align: center;
+}
+.rep-num { font-size: 52px; font-weight: 700; font-family: var(--mono); color: var(--accent); line-height: 1; }
+.rep-label { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.rep-row { display: flex; gap: 8px; margin-top: 12px; }
+.rep-btn {
+  flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font-family: var(--font);
+  font-weight: 600; font-size: 14px; cursor: pointer;
+}
+.rep-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+
+.form-score-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.form-score-card h5 { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+.score-bar-row { margin-bottom: 8px; }
+.score-bar-row label { font-size: 11px; color: var(--text2); display: flex; justify-content: space-between; margin-bottom: 4px; }
+.score-bar-row label span { color: var(--text); font-weight: 600; }
+.score-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 4px; }
+
+/* ===== STATS PANEL ===== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-tile {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.stat-tile-val { font-size: 28px; font-weight: 700; font-family: var(--mono); }
+.stat-tile-val.green { color: var(--accent); }
+.stat-tile-val.blue { color: var(--accent2); }
+.stat-tile-val.orange { color: var(--accent4); }
+.stat-tile-val.red { color: var(--accent3); }
+.stat-tile-label { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.stat-tile-sub { font-size: 10px; color: var(--text2); margin-top: 6px; }
+
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+}
+.chart-card h5 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+.bar { width: 100%; border-radius: 6px 6px 0 0; transition: height 1s ease; min-height: 4px; }
+.bar-day { font-size: 9px; color: var(--text3); font-family: var(--mono); }
+
+.timeline-vis { position: relative; }
+.tl-item {
+  display: flex; gap: 12px; padding: 10px 0;
+  border-left: 2px solid var(--surface2); margin-left: 10px; padding-left: 16px;
+  position: relative;
+}
+.tl-item::before {
+  content: ''; position: absolute; left: -6px; top: 14px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--surface2); border: 2px solid var(--accent);
+}
+.tl-item.done::before { background: var(--accent); }
+.tl-item.skip::before { background: var(--accent3); border-color: var(--accent3); }
+.tl-time { font-size: 10px; font-family: var(--mono); color: var(--text3); width: 40px; flex-shrink: 0; padding-top: 2px; }
+.tl-content { flex: 1; }
+.tl-content h6 { font-size: 13px; font-weight: 600; }
+.tl-content p { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.tl-tag { display: inline-block; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-top: 4px; font-family: var(--mono); }
+.tl-tag.prescribed { background: rgba(0,212,170,0.1); color: var(--accent); }
+.tl-tag.off { background: rgba(255,107,107,0.1); color: var(--accent3); }
+.tl-tag.skipped { background: rgba(255,255,255,0.05); color: var(--text3); }
+
+/* ===== SETTING PANEL ===== */
+.setting-section { margin-bottom: 20px; }
+.setting-section h5 { font-size: 11px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
+.setting-row {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px; cursor: pointer;
+}
+.setting-row-left { display: flex; align-items: center; gap: 12px; }
+.setting-row-left svg { width: 18px; height: 18px; color: var(--text2); }
+.setting-row-title { font-size: 14px; font-weight: 500; }
+.setting-row-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.toggle {
+  width: 44px; height: 26px; background: var(--surface2);
+  border-radius: 13px; position: relative; cursor: pointer;
+  border: 1px solid var(--border); transition: 0.3s;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; background: #fff; border-radius: 50%;
+  transition: 0.3s;
+}
+.toggle.on::after { transform: translateX(18px); }
+
+.doctor-code-box {
+  background: linear-gradient(135deg, rgba(0,212,170,0.1), rgba(79,142,247,0.1));
+  border: 1px solid rgba(0,212,170,0.3);
+  border-radius: var(--radius); padding: 20px; text-align: center; margin-bottom: 16px;
+}
+.doctor-code { font-size: 32px; font-family: var(--mono); font-weight: 700; letter-spacing: 6px; color: var(--accent); margin: 8px 0; }
+.doctor-code-sub { font-size: 11px; color: var(--text3); }
+
+.exit-btn {
+  width: 100%; padding: 16px; border-radius: var(--radius);
+  background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3);
+  color: var(--accent3); font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: var(--font);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 8px;
+}
+
+/* ===== CHAT PANEL ===== */
+.chat-msgs { min-height: 55vh; padding-bottom: 8px; display: flex; flex-direction: column; gap: 10px; }
+.msg-bubble {
+  max-width: 82%; padding: 10px 14px; border-radius: 16px;
+  font-size: 13px; line-height: 1.5;
+}
+.msg-bubble.ai {
+  background: var(--surface); border: 1px solid var(--border);
+  border-bottom-left-radius: 4px; align-self: flex-start;
+}
+.msg-bubble.user {
+  background: linear-gradient(135deg, var(--accent), #00b894);
+  color: #000; font-weight: 500;
+  border-bottom-right-radius: 4px; align-self: flex-end;
+}
+.msg-bubble .msg-time { font-size: 9px; opacity: 0.5; margin-top: 4px; font-family: var(--mono); }
+.msg-bubble.ai .msg-time { text-align: left; }
+.msg-bubble.user .msg-time { text-align: right; }
+.gyro-live-bubble {
+  background: var(--surface); border: 1px solid rgba(79,142,247,0.3);
+  border-radius: 14px; padding: 12px 14px; align-self: flex-start; max-width: 92%;
+}
+.gyro-live-bubble h6 { font-size: 11px; color: var(--accent2); margin-bottom: 8px; font-family: var(--mono); }
+.gyro-live-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.gyro-live-val { font-size: 13px; font-family: var(--mono); font-weight: 700; }
+.gyro-live-val.x { color: var(--accent3); }
+.gyro-live-val.y { color: var(--accent); }
+.gyro-live-val.z { color: var(--accent2); }
+.gyro-live-label { font-size: 10px; color: var(--text3); }
+.chat-input-row {
+  display: flex; gap: 8px; padding: 12px 0;
+  position: sticky; bottom: 80px; background: var(--bg);
+}
+.chat-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 16px; color: var(--text);
+  font-family: var(--font); font-size: 14px; outline: none;
+}
+.chat-input::placeholder { color: var(--text3); }
+.chat-send {
+  width: 46px; height: 46px; border-radius: 14px;
+  background: var(--accent); border: none; color: #000;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.chat-send svg { width: 18px; height: 18px; }
+
+/* ===== QR MODAL ===== */
+.qr-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  z-index: 400; display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.qr-modal.open { display: flex; }
+.qr-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 24px; text-align: center; width: 85vw; max-width: 320px;
+}
+.qr-box h4 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.qr-box p { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+.qr-placeholder {
+  width: 180px; height: 180px; margin: 0 auto 16px;
+  background: #fff; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; color: #000; padding: 16px;
+}
+.qr-placeholder canvas { width: 100%; height: 100%; }
+.qr-close {
+  width: 100%; padding: 12px; border-radius: 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font); font-size: 14px; cursor: pointer;
+}
+
+/* Alert expand panel */
+.alert-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 12px;
+  overflow: hidden;
+}
+.alert-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; cursor: pointer;
+}
+.alert-panel-header h5 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.alert-badge { background: var(--accent3); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 20px; font-weight: 700; }
+.alert-body { display: none; padding: 0 14px 14px; }
+.alert-body.open { display: block; }
+.alert-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.alert-item:last-child { border-bottom: none; }
+.alert-item-time { font-size: 10px; font-family: var(--mono); color: var(--text3); width: 48px; flex-shrink: 0; padding-top: 2px; }
+.alert-item-text { font-size: 12px; color: var(--text2); }
+.alert-item-text b { color: var(--accent3); }
+
+/* Agentic AI popup */
+.ai-interject {
+  position: fixed; bottom: 90px; left: 12px; right: 12px;
+  background: linear-gradient(135deg, rgba(0,212,170,0.15), rgba(79,142,247,0.1));
+  border: 1px solid rgba(0,212,170,0.4); border-radius: 16px; padding: 14px 16px;
+  z-index: 150; display: none; animation: slideUp 0.3s ease;
+}
+.ai-interject.show { display: block; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ai-interject-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ai-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 1s infinite; }
+.ai-interject-head span { font-size: 12px; font-weight: 600; color: var(--accent); }
+.ai-interject p { font-size: 13px; color: var(--text); line-height: 1.5; }
+.ai-interject-btns { display: flex; gap: 8px; margin-top: 10px; }
+.ai-int-btn {
+  flex: 1; padding: 8px; border-radius: 10px; font-family: var(--font);
+  font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid;
+}
+.ai-int-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+.ai-int-btn.ghost { background: transparent; color: var(--text2); border-color: var(--border); }
+
+/* Fullscreen mode */
+body.fullscreen .bottom-nav { display: none; }
+body.fullscreen .topbar { display: none; }
+
+/* Desktop */
+@media (min-width: 768px) {
+  .desktop-msg { display: flex !important; }
+  .app { display: none; }
+}
+.desktop-msg {
+  display: none; height: 100vh; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px; text-align: center; padding: 40px;
+}
+.desktop-msg h2 { font-size: 24px; font-weight: 700; }
+.desktop-msg p { color: var(--text2); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="desktop-msg">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--accent)">
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+    <line x1="12" y1="18" x2="12.01" y2="18"></line>
+  </svg>
+  <h2>PhysioAI — Mobile Only</h2>
+  <p>Open on your mobile device, or use DevTools device mode (F12 → Toggle Device Toolbar)</p>
+</div>
+
+<div class="app" id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div>
+        <div class="topbar-title">Physio<em>AI</em></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-badge" style="position:relative">
+        Day 14
+        <div class="alert-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS -->
+  <!-- 1. Daily Activity -->
+  <div id="panel-daily" class="panel active">
+    <div class="panel-head">
+      <h2>Good morning,<br>John 👋</h2>
+      <p>Ankle Rehabilitation · Week 2</p>
+    </div>
+
+    <!-- Alert Expand Box -->
+    <div class="alert-panel">
+      <div class="alert-panel-header" onclick="toggleAlerts()">
+        <h5>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent3)" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          AI Alerts &amp; Messages
+          <span class="alert-badge">3</span>
+        </h5>
+        <svg id="alert-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div class="alert-body" id="alert-body">
+        <div class="alert-item">
+          <div class="alert-item-time">08:12</div>
+          <div class="alert-item-text"><b>⚠ Form Alert:</b> Left ankle pronation detected during morning walk. 3 corrections suggested.</div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-time">07:30</div>
+          <div class="alert-item-text"><b>✓ Milestone:</b> Range of motion improved by 12% vs yesterday. Keep going!</div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-time">06:45</div>
+          <div class="alert-item-text"><b>📋 Dr. Note:</b> New exercise added to schedule — Proprioception Board.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ring Progress -->
+    <div class="day-progress-ring">
+      <div class="ring-wrap">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle class="ring-bg" cx="36" cy="36" r="30"></circle>
+          <circle class="ring-fg" cx="36" cy="36" r="30" stroke-dasharray="188.4" stroke-dashoffset="66" id="progress-ring"></circle>
+        </svg>
+        <div class="ring-inner"><span>65%</span><small>today</small></div>
+      </div>
+      <div class="day-progress-info">
+        <h3>4 of 6 exercises done</h3>
+        <p>2 remaining · Est. 18 min</p>
+        <div class="day-chips">
+          <span class="chip green">✓ 4 done</span>
+          <span class="chip blue">→ 2 left</span>
+          <span class="chip orange">⏱ 18m</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercise Timeline -->
+    <div class="timeline">
+      <div class="timeline-label">Today's Schedule</div>
+      <div class="ex-card done" onclick="openExercise('Ankle Circles', '✅')">
+        <div class="ex-icon done">🔄</div>
+        <div class="ex-info">
+          <h4>Ankle Circles</h4>
+          <p>Warm-up · Clockwise & counter</p>
+          <div class="ex-meta"><span class="ex-tag">2×20 reps</span><span class="ex-tag">done</span></div>
+        </div>
+        <div class="ex-status done">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+      </div>
+      <div class="ex-card done" onclick="openExercise('Heel Raises', '✅')">
+        <div class="ex-icon done">⬆️</div>
+        <div class="ex-info">
+          <h4>Heel Raises</h4>
+          <p>Strengthening · Bilateral</p>
+          <div class="ex-meta"><span class="ex-tag">3×15 reps</span><span class="ex-tag">done</span></div>
+        </div>
+        <div class="ex-status done">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+      </div>
+      <div class="ex-card done" onclick="openExercise('Towel Scrunches', '✅')">
+        <div class="ex-icon done">👣</div>
+        <div class="ex-info">
+          <h4>Towel Scrunches</h4>
+          <p>Intrinsic foot strength</p>
+          <div class="ex-meta"><span class="ex-tag">3×30s</span><span class="ex-tag">done</span></div>
+        </div>
+        <div class="ex-status done">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+      </div>
+      <div class="ex-card done" onclick="openExercise('Resistance Band Eversion', '✅')">
+        <div class="ex-icon done">🏋️</div>
+        <div class="ex-info">
+          <h4>Resistance Band Eversion</h4>
+          <p>Lateral ankle stability</p>
+          <div class="ex-meta"><span class="ex-tag">3×12 reps</span><span class="ex-tag">done</span></div>
+        </div>
+        <div class="ex-status done">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+      </div>
+      <div class="ex-card active" onclick="openExercise('Single Leg Balance', '🎯')">
+        <div class="ex-icon">🦶</div>
+        <div class="ex-info">
+          <h4>Single Leg Balance</h4>
+          <p>Proprioception · Eyes open/closed</p>
+          <div class="ex-meta"><span class="ex-tag">3×30s hold</span><span class="ex-tag">⚡ next</span></div>
+        </div>
+        <div class="ex-status active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </div>
+      </div>
+      <div class="ex-card upcoming" onclick="openExercise('Proprioception Board', '🆕')">
+        <div class="ex-icon">🟦</div>
+        <div class="ex-info">
+          <h4>Proprioception Board</h4>
+          <p>NEW — Added by Dr. Sharma</p>
+          <div class="ex-meta"><span class="ex-tag">2×60s</span><span class="ex-tag">🆕 new</span></div>
+        </div>
+        <div class="ex-status upcoming">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Stats Panel -->
+  <div id="panel-stats" class="panel">
+    <div class="panel-head"><h2>Activity Insights</h2><p>Week 2 progress analytics</p></div>
+
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="stat-tile-val green">65%</div><div class="stat-tile-label">Goal Achievement</div><div class="stat-tile-sub">↑ 8% from yesterday</div></div>
+      <div class="stat-tile"><div class="stat-tile-val blue">118°</div><div class="stat-tile-label">Range of Motion</div><div class="stat-tile-sub">Target: 135°</div></div>
+      <div class="stat-tile"><div class="stat-tile-val orange">45m</div><div class="stat-tile-label">Active Today</div><div class="stat-tile-sub">Goal: 60min</div></div>
+      <div class="stat-tile"><div class="stat-tile-val red">2</div><div class="stat-tile-label">Form Alerts</div><div class="stat-tile-sub">This session</div></div>
+    </div>
+
+    <div class="chart-card">
+      <h5>Weekly Compliance</h5>
+      <div class="bar-chart" id="weekly-chart"></div>
+    </div>
+
+    <div class="chart-card">
+      <h5>Today's Exercise Log</h5>
+      <div class="timeline-vis" id="tl-vis">
+        <div class="tl-item done"><div class="tl-time">07:15</div><div class="tl-content"><h6>Ankle Circles</h6><p>2×20 · 4 min 12s</p><span class="tl-tag prescribed">Prescribed ✓</span></div></div>
+        <div class="tl-item done"><div class="tl-time">07:21</div><div class="tl-content"><h6>Heel Raises</h6><p>3×15 · 6 min 45s</p><span class="tl-tag prescribed">Prescribed ✓</span></div></div>
+        <div class="tl-item done"><div class="tl-time">07:30</div><div class="tl-content"><h6>Towel Scrunches</h6><p>3×30s · 5 min 10s</p><span class="tl-tag prescribed">Prescribed ✓</span></div></div>
+        <div class="tl-item done"><div class="tl-time">07:38</div><div class="tl-content"><h6>Resistance Band Eversion</h6><p>3×12 · 7 min 22s</p><span class="tl-tag off">⚠ 2 form errors</span></div></div>
+        <div class="tl-item"><div class="tl-time">—</div><div class="tl-content"><h6>Single Leg Balance</h6><p>Not started</p><span class="tl-tag skipped">Pending</span></div></div>
+        <div class="tl-item"><div class="tl-time">—</div><div class="tl-content"><h6>Proprioception Board</h6><p>Not started</p><span class="tl-tag skipped">Pending</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Settings Panel -->
+  <div id="panel-setting" class="panel">
+    <div class="panel-head"><h2>Settings</h2><p>Device, account & preferences</p></div>
+
+    <div class="doctor-code-box">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">YOUR PATIENT CODE</div>
+      <div class="doctor-code">JD-4821</div>
+      <div class="doctor-code-sub">Share with your doctor to link accounts</div>
+      <button onclick="openQR()" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:8px 20px;font-family:var(--font);font-weight:700;margin-top:12px;cursor:pointer">Scan QR Code</button>
+    </div>
+
+    <div class="setting-section">
+      <h5>Sensors</h5>
+      <div class="setting-row">
+        <div class="setting-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <div><div class="setting-row-title">Gyroscope Tracking</div><div class="setting-row-sub">Real-time motion data</div></div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <div><div class="setting-row-title">Camera AI Form Check</div><div class="setting-row-sub">ML pose estimation</div></div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div><div class="setting-row-title">Dual-Device Sensor Mode</div><div class="setting-row-sub">Use 2nd phone as sensor</div></div>
+        </div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <div class="setting-section">
+      <h5>Notifications</h5>
+      <div class="setting-row">
+        <div class="setting-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div><div class="setting-row-title">10-min Alert Boxes</div><div class="setting-row-sub">Stay-alert reminders</div></div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <div><div class="setting-row-title">Agentic AI Interjections</div><div class="setting-row-sub">Audio + visual cues</div></div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <div class="setting-section">
+      <h5>Account</h5>
+      <div class="setting-row">
+        <div class="setting-row-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div><div class="setting-row-title">John Doe</div><div class="setting-row-sub">Dr. Sharma · Ankle Rehab</div></div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+    </div>
+
+    <button class="exit-btn" onclick="exitFullScreen()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Exit Fullscreen
+    </button>
+  </div>
+
+  <!-- 4. Chat Panel -->
+  <div id="panel-chat" class="panel">
+    <div class="panel-head"><h2>Physio Assistant</h2><p>AI-powered recovery guide</p></div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="msg-bubble ai">
+        Hey John! Ready for today's session? You've got 2 exercises left. How's the ankle feeling this morning?
+        <div class="msg-time">07:00</div>
+      </div>
+      <div class="msg-bubble user">
+        A bit stiff, but better than yesterday for sure.
+        <div class="msg-time">07:02</div>
+      </div>
+      <div class="msg-bubble ai">
+        That stiffness is normal at Day 14. Your ROM improved 12% — you're on track. Let's start with Ankle Circles to warm up.
+        <div class="msg-time">07:02</div>
+      </div>
+      <!-- Live gyro bubble -->
+      <div class="gyro-live-bubble" id="gyro-bubble">
+        <h6>📡 LIVE GYROSCOPE DATA</h6>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center">
+            <div class="gyro-live-label">X-AXIS</div>
+            <div class="gyro-live-val x" id="chat-gx">0.00°</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center">
+            <div class="gyro-live-label">Y-AXIS</div>
+            <div class="gyro-live-val y" id="chat-gy">0.00°</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center">
+            <div class="gyro-live-label">Z-AXIS</div>
+            <div class="gyro-live-val z" id="chat-gz">0.00°</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text3);font-family:var(--mono)" id="gyro-status">Awaiting device motion data…</div>
+        <div class="msg-time">Live</div>
+      </div>
+      <div class="msg-bubble ai">
+        I notice you're holding your phone — I can see some wrist rotation. That's fine! Just make sure your phone is stable during exercises for accurate readings.
+        <div class="msg-time">07:10</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chat-input" placeholder="Ask your physio AI..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-daily" onclick="showPanel('daily', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Daily Activity</span>
+    </button>
+    <button class="nav-btn" id="nav-stats" onclick="showPanel('stats', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Stats</span>
+    </button>
+    <button class="nav-btn" id="nav-setting" onclick="showPanel('setting', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <span>Settings</span>
+    </button>
+    <button class="nav-btn" id="nav-chat" onclick="showPanel('chat', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Chat</span>
+    </button>
+  </nav>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Physio<em>AI</em></div>
+    <button class="sidebar-close" onclick="toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Emergency Messages</div>
+    <div class="emergency-box">
+      <h5>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent3)" stroke="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        Active Alerts (3)
+      </h5>
+      <div class="emergency-msg">
+        <div class="em-time">08:12 today</div>
+        <div class="em-text"><b>Form Alert:</b> Pronation detected on left ankle during eversion exercise. Correction suggested.</div>
+      </div>
+      <div class="emergency-msg">
+        <div class="em-time">07:30 today</div>
+        <div class="em-text"><b>New Exercise:</b> Proprioception Board added by Dr. Sharma for today.</div>
+      </div>
+      <div class="emergency-msg">
+        <div class="em-time">Yesterday</div>
+        <div class="em-text"><b>Milestone:</b> 12% ROM improvement noted.</div>
+      </div>
+      <span class="expand-btn" onclick="showPanel('chat', document.getElementById('nav-chat')); toggleSidebar()">View all in Chat →</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Navigation</div>
+    <div class="sidebar-nav-item active" onclick="showPanel('daily',document.getElementById('nav-daily'));toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Daily Activity
+    </div>
+    <div class="sidebar-nav-item" onclick="showPanel('stats',document.getElementById('nav-stats'));toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Stats
+    </div>
+    <div class="sidebar-nav-item" onclick="showPanel('setting',document.getElementById('nav-setting'));toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Settings
+    </div>
+    <div class="sidebar-nav-item" onclick="showPanel('chat',document.getElementById('nav-chat'));toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Chat
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Doctor Portal</div>
+    <div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Connected Doctor</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#000">DS</div>
+        <div>
+          <div style="font-size:14px;font-weight:600">Dr. Sharma</div>
+          <div style="font-size:11px;color:var(--text3)">Orthopedic Rehab · Mumbai</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="sidebar-qr-btn" onclick="openQR(); toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="14" y2="14"/><line x1="14" y1="17" x2="17" y2="17"/><line x1="17" y1="14" x2="17" y2="17"/><line x1="20" y1="14" x2="20" y2="14"/><line x1="20" y1="17" x2="20" y2="17"/><line x1="20" y1="20" x2="20" y2="20"/><line x1="17" y1="20" x2="17" y2="20"/><line x1="14" y1="20" x2="14" y2="20"/></svg>
+    Add New Device / Doctor QR
+  </button>
+</div>
+
+<!-- EXERCISE SESSION MODAL -->
+<div class="ex-modal" id="ex-modal">
+  <div class="ex-modal-top">
+    <button class="ex-back-btn" onclick="closeExercise()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <div>
+      <div class="ex-modal-title" id="ex-modal-title">Exercise</div>
+      <div class="ex-modal-subtitle">AI Form Check Active</div>
+    </div>
+    <div style="margin-left:auto">
+      <button onclick="goFullscreen()" style="background:var(--accent);border:none;color:#000;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer">⛶ Full</button>
+    </div>
+  </div>
+
+  <!-- Camera Half -->
+  <div class="camera-half">
+    <div class="cam-placeholder">
+      <div class="cam-icon">📷</div>
+      <div class="cam-label">Tap to enable camera</div>
+      <button onclick="startCamera()" style="background:var(--accent);border:none;color:#000;padding:10px 24px;border-radius:12px;font-weight:700;font-family:var(--font);margin-top:8px;cursor:pointer">Enable Camera</button>
+    </div>
+    <video id="cam-video" autoplay playsinline style="display:none;width:100%;height:100%;object-fit:cover"></video>
+    <div class="pose-overlay" id="pose-overlay" style="display:none">
+      <div class="pose-box">
+        <div class="pose-corner tl"></div>
+        <div class="pose-corner tr"></div>
+        <div class="pose-corner bl"></div>
+        <div class="pose-corner br"></div>
+      </div>
+    </div>
+    <div class="cam-live-badge"><div class="cam-live-dot"></div>LIVE</div>
+    <div class="cam-metric top-right"><span>FORM SCORE</span><span id="form-score">—</span></div>
+    <div class="cam-metric bottom-left"><span>REPS</span><span id="cam-reps">0</span></div>
+    <div class="cam-metric bottom-right"><span>DEVIATION</span><span id="cam-dev">0°</span></div>
+    <div class="cam-ai-prompt" id="cam-ai-prompt">
+      <small>🤖 AI Coach</small>
+      <p id="ai-prompt-text">Position yourself so your full body is visible. Keep the camera steady.</p>
+    </div>
+  </div>
+
+  <!-- Data Half -->
+  <div class="data-half">
+    <!-- Rep Counter -->
+    <div class="rep-counter">
+      <div class="rep-num" id="rep-count">0</div>
+      <div class="rep-label">REPS COMPLETED</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Target: <span style="color:var(--accent)" id="rep-target">15</span> reps</div>
+      <div class="rep-row">
+        <button class="rep-btn" onclick="repCount(-1)">−</button>
+        <button class="rep-btn primary" onclick="repCount(1)">＋ Rep</button>
+      </div>
+    </div>
+
+    <!-- Gyroscope Card -->
+    <div class="gyro-card">
+      <h5>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        GYROSCOPE · LIVE
+      </h5>
+      <div class="gyro-grid">
+        <div class="gyro-axis"><div class="gyro-axis-label">PITCH X</div><div class="gyro-axis-val x" id="gx">0.0°</div></div>
+        <div class="gyro-axis"><div class="gyro-axis-label">ROLL Y</div><div class="gyro-axis-val y" id="gy">0.0°</div></div>
+        <div class="gyro-axis"><div class="gyro-axis-label">YAW Z</div><div class="gyro-axis-val z" id="gz">0.0°</div></div>
+      </div>
+      <div class="gyro-bar-wrap">
+        <div class="gyro-bar-row">
+          <span>X</span>
+          <div class="gyro-bar"><div class="gyro-bar-fill" id="bar-x" style="width:50%;background:var(--accent3)"></div></div>
+        </div>
+        <div class="gyro-bar-row">
+          <span>Y</span>
+          <div class="gyro-bar"><div class="gyro-bar-fill" id="bar-y" style="width:50%;background:var(--accent)"></div></div>
+        </div>
+        <div class="gyro-bar-row">
+          <span>Z</span>
+          <div class="gyro-bar"><div class="gyro-bar-fill" id="bar-z" style="width:50%;background:var(--accent2)"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:var(--text3);font-family:var(--mono)" id="gyro-info">Tilt your phone to see live data</div>
+    </div>
+
+    <!-- Form Score -->
+    <div class="form-score-card">
+      <h5>AI Form Analysis</h5>
+      <div class="score-bar-row">
+        <label>Alignment <span id="s-align">82%</span></label>
+        <div class="score-bar"><div class="score-bar-fill" id="fill-align" style="width:82%;background:var(--accent)"></div></div>
+      </div>
+      <div class="score-bar-row">
+        <label>Balance <span id="s-balance">74%</span></label>
+        <div class="score-bar"><div class="score-bar-fill" id="fill-balance" style="width:74%;background:var(--accent2)"></div></div>
+      </div>
+      <div class="score-bar-row">
+        <label>Range of Motion <span id="s-rom">68%</span></label>
+        <div class="score-bar"><div class="score-bar-fill" id="fill-rom" style="width:68%;background:var(--accent4)"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="qr-modal" id="qr-modal" onclick="this.classList.remove('open')">
+  <div class="qr-box" onclick="event.stopPropagation()">
+    <h4>Scan to Link Device</h4>
+    <p>Doctor or new device scans this code to access your account</p>
+    <div class="qr-placeholder">
+      <!-- Simple SVG QR-like pattern -->
+      <svg width="148" height="148" viewBox="0 0 148 148">
+        <rect width="148" height="148" fill="white"/>
+        <!-- Corner squares -->
+        <rect x="10" y="10" width="38" height="38" rx="4" fill="#111"/>
+        <rect x="14" y="14" width="30" height="30" rx="2" fill="white"/>
+        <rect x="18" y="18" width="22" height="22" rx="2" fill="#111"/>
+        <rect x="100" y="10" width="38" height="38" rx="4" fill="#111"/>
+        <rect x="104" y="14" width="30" height="30" rx="2" fill="white"/>
+        <rect x="108" y="18" width="22" height="22" rx="2" fill="#111"/>
+        <rect x="10" y="100" width="38" height="38" rx="4" fill="#111"/>
+        <rect x="14" y="104" width="30" height="30" rx="2" fill="white"/>
+        <rect x="18" y="108" width="22" height="22" rx="2" fill="#111"/>
+        <!-- Pattern -->
+        <rect x="60" y="10" width="8" height="8" fill="#111"/>
+        <rect x="72" y="10" width="8" height="8" fill="#111"/>
+        <rect x="84" y="10" width="8" height="8" fill="#111"/>
+        <rect x="60" y="22" width="8" height="8" fill="#111"/>
+        <rect x="72" y="34" width="8" height="8" fill="#111"/>
+        <rect x="60" y="60" width="8" height="8" fill="#111"/>
+        <rect x="72" y="60" width="8" height="8" fill="#111"/>
+        <rect x="84" y="60" width="8" height="8" fill="#111"/>
+        <rect x="60" y="72" width="8" height="8" fill="#111"/>
+        <rect x="84" y="72" width="8" height="8" fill="#111"/>
+        <rect x="60" y="84" width="8" height="8" fill="#111"/>
+        <rect x="72" y="84" width="8" height="8" fill="#111"/>
+        <rect x="84" y="84" width="8" height="8" fill="#111"/>
+        <rect x="100" y="60" width="8" height="8" fill="#111"/>
+        <rect x="112" y="60" width="8" height="8" fill="#111"/>
+        <rect x="124" y="60" width="8" height="8" fill="#111"/>
+        <rect x="100" y="72" width="8" height="8" fill="#111"/>
+        <rect x="124" y="72" width="8" height="8" fill="#111"/>
+        <rect x="100" y="84" width="8" height="8" fill="#111"/>
+        <rect x="112" y="84" width="8" height="8" fill="#111"/>
+        <rect x="124" y="84" width="8" height="8" fill="#111"/>
+        <rect x="100" y="100" width="8" height="8" fill="#111"/>
+        <rect x="112" y="112" width="8" height="8" fill="#111"/>
+        <rect x="124" y="100" width="8" height="8" fill="#111"/>
+        <rect x="100" y="124" width="8" height="8" fill="#111"/>
+        <rect x="112" y="124" width="8" height="8" fill="#111"/>
+        <rect x="10" y="60" width="8" height="8" fill="#111"/>
+        <rect x="22" y="60" width="8" height="8" fill="#111"/>
+        <rect x="34" y="72" width="8" height="8" fill="#111"/>
+        <rect x="10" y="84" width="8" height="8" fill="#111"/>
+        <!-- Center logo text -->
+        <text x="74" y="79" text-anchor="middle" font-family="monospace" font-size="10" fill="#00d4aa" font-weight="bold">JD-4821</text>
+      </svg>
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:12px;font-family:monospace">Patient ID: JD-4821 · Expires in 10min</div>
+    <button class="qr-close" onclick="document.getElementById('qr-modal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<!-- AGENTIC AI INTERJECT -->
+<div class="ai-interject" id="ai-interject">
+  <div class="ai-interject-head">
+    <div class="ai-dot"></div>
+    <span>Agentic AI — Intervening</span>
+  </div>
+  <p id="ai-interject-msg">I noticed unusual ankle rotation during your last rep. Would you like me to show a correction guide or alert Dr. Sharma?</p>
+  <div class="ai-interject-btns">
+    <button class="ai-int-btn primary" onclick="dismissInterject()">Show Fix</button>
+    <button class="ai-int-btn ghost" onclick="dismissInterject()">Dismiss</button>
+  </div>
+</div>
+
+<script>
+// ===== PANEL SWITCHING =====
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+// ===== ALERTS =====
+function toggleAlerts() {
+  const body = document.getElementById('alert-body');
+  const arrow = document.getElementById('alert-arrow');
+  body.classList.toggle('open');
+  arrow.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+// ===== EXERCISE MODAL =====
+let repCountVal = 0;
+function openExercise(name, icon) {
+  document.getElementById('ex-modal-title').textContent = name;
+  document.getElementById('rep-count').textContent = '0';
+  document.getElementById('cam-reps').textContent = '0';
+  repCountVal = 0;
+  document.getElementById('ex-modal').classList.add('open');
+  startGyro();
+  // Random target
+  const targets = [12, 15, 20, 30];
+  const t = targets[Math.floor(Math.random() * targets.length)];
+  document.getElementById('rep-target').textContent = t;
+  // Animate form scores
+  setTimeout(() => animateScores(), 600);
+  // Show agentic AI after delay
+  setTimeout(() => showInterject(), 12000);
+}
+function closeExercise() {
+  document.getElementById('ex-modal').classList.remove('open');
+  stopCamera();
+}
+function goFullscreen() {
+  const el = document.getElementById('ex-modal');
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+}
+
+// ===== REP COUNTER =====
+function repCount(delta) {
+  repCountVal = Math.max(0, repCountVal + delta);
+  document.getElementById('rep-count').textContent = repCountVal;
+  document.getElementById('cam-reps').textContent = repCountVal;
+  // Animate
+  const el = document.getElementById('rep-count');
+  el.style.transform = 'scale(1.2)';
+  setTimeout(() => el.style.transform = '', 150);
+  // AI prompts
+  const prompts = [
+    "Great rep! Keep your ankle neutral.",
+    "Good form! Don't lock the knee.",
+    "Nice! Maintain slow controlled movement.",
+    "Excellent! Feel the muscle engage.",
+    "Perfect alignment detected! 🎯"
+  ];
+  document.getElementById('ai-prompt-text').textContent = prompts[repCountVal % prompts.length];
+  document.getElementById('form-score').textContent = (75 + Math.floor(Math.random()*20)) + '%';
+  document.getElementById('cam-dev').textContent = (Math.random()*8).toFixed(1) + '°';
+}
+
+// ===== GYROSCOPE =====
+let gyroActive = false;
+let gyroInterval = null;
+function startGyro() {
+  if (typeof DeviceOrientationEvent !== 'undefined') {
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(r => {
+        if (r === 'granted') window.addEventListener('deviceorientation', handleGyro, true);
+      }).catch(console.error);
+    } else {
+      window.addEventListener('deviceorientation', handleGyro, true);
+    }
+  }
+  // Simulation fallback
+  if (!gyroActive) {
+    startGyroSim();
+  }
+}
+
+let simGyroX = 0, simGyroY = 0, simGyroZ = 0;
+let simInterval = null;
+function startGyroSim() {
+  if (simInterval) return;
+  simInterval = setInterval(() => {
+    simGyroX += (Math.random() - 0.48) * 3;
+    simGyroY += (Math.random() - 0.48) * 3;
+    simGyroZ += (Math.random() - 0.48) * 2;
+    simGyroX = Math.max(-90, Math.min(90, simGyroX));
+    simGyroY = Math.max(-90, Math.min(90, simGyroY));
+    simGyroZ = Math.max(-180, Math.min(180, simGyroZ));
+    updateGyroDisplay(simGyroX, simGyroY, simGyroZ, true);
+  }, 200);
+}
+
+function handleGyro(e) {
+  gyroActive = true;
+  if (simInterval) { clearInterval(simInterval); simInterval = null; }
+  updateGyroDisplay(e.beta || 0, e.gamma || 0, e.alpha || 0, false);
+}
+
+function updateGyroDisplay(x, y, z, simulated) {
+  const fmtx = x.toFixed(1) + '°';
+  const fmty = y.toFixed(1) + '°';
+  const fmtz = z.toFixed(1) + '°';
+  // Exercise modal
+  if (document.getElementById('gx')) {
+    document.getElementById('gx').textContent = fmtx;
+    document.getElementById('gy').textContent = fmty;
+    document.getElementById('gz').textContent = fmtz;
+    const xPct = ((x + 90) / 180 * 100).toFixed(0);
+    const yPct = ((y + 90) / 180 * 100).toFixed(0);
+    const zPct = ((z + 180) / 360 * 100).toFixed(0);
+    document.getElementById('bar-x').style.width = xPct + '%';
+    document.getElementById('bar-y').style.width = yPct + '%';
+    document.getElementById('bar-z').style.width = zPct + '%';
+    document.getElementById('gyro-info').textContent = simulated
+      ? '⚠ Simulated · Real gyroscope on mobile'
+      : '✓ Live gyroscope data';
+  }
+  // Chat panel
+  if (document.getElementById('chat-gx')) {
+    document.getElementById('chat-gx').textContent = fmtx;
+    document.getElementById('chat-gy').textContent = fmty;
+    document.getElementById('chat-gz').textContent = fmtz;
+    document.getElementById('gyro-status').textContent = simulated
+      ? '⚠ Simulated mode (run on mobile for real data)'
+      : '✓ Live device motion data';
+  }
+}
+
+// Start gyro simulation globally for chat panel
+startGyroSim();
+
+// ===== CAMERA =====
+let videoStream = null;
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    videoStream = stream;
+    const vid = document.getElementById('cam-video');
+    vid.srcObject = stream;
+    vid.style.display = 'block';
+    vid.previousElementSibling.style.display = 'none';
+    document.getElementById('pose-overlay').style.display = 'block';
+    document.getElementById('form-score').textContent = '87%';
+  } catch(e) {
+    document.querySelector('.cam-label').textContent = 'Camera access denied';
+    document.getElementById('form-score').textContent = '—';
+  }
+}
+function stopCamera() {
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+}
+
+// ===== FORM SCORE ANIMATION =====
+function animateScores() {
+  const scores = [
+    { id: 'fill-align', label: 's-align', base: 70, range: 25 },
+    { id: 'fill-balance', label: 's-balance', base: 65, range: 30 },
+    { id: 'fill-rom', label: 's-rom', base: 60, range: 30 },
+  ];
+  scores.forEach(s => {
+    const val = s.base + Math.floor(Math.random() * s.range);
+    document.getElementById(s.id).style.width = val + '%';
+    document.getElementById(s.label).textContent = val + '%';
+  });
+}
+
+// ===== WEEKLY BAR CHART =====
+const days = ['M','T','W','T','F','S','S'];
+const vals = [80, 100, 65, 90, 70, 0, 0];
+const chart = document.getElementById('weekly-chart');
+if (chart) {
+  days.forEach((d, i) => {
+    const w = document.createElement('div');
+    w.className = 'bar-wrap';
+    const pct = vals[i];
+    const color = pct === 0 ? 'var(--surface2)' : pct >= 90 ? 'var(--accent)' : pct >= 70 ? 'var(--accent2)' : 'var(--accent4)';
+    w.innerHTML = `<div class="bar" style="height:${pct||4}%;background:${color};margin-top:auto"></div><div class="bar-day">${d}</div>`;
+    chart.appendChild(w);
+  });
+}
+
+// ===== AGENTIC AI INTERJECT =====
+function showInterject() {
+  document.getElementById('ai-interject').classList.add('show');
+}
+function dismissInterject() {
+  document.getElementById('ai-interject').classList.remove('show');
+}
+// Show randomly during daily panel use
+setTimeout(() => {
+  if (!document.getElementById('ex-modal').classList.contains('open')) {
+    const msgs = [
+      "You skipped Single Leg Balance yesterday. Want me to add an extra set today?",
+      "Your device detected unusual movement earlier. Everything okay?",
+      "Time for your 10-min check-in! How is the ankle feeling? Tap to log."
+    ];
+    document.getElementById('ai-interject-msg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+    showInterject();
+    setTimeout(dismissInterject, 8000);
+  }
+}, 5000);
+
+// ===== CHAT =====
+function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  const msgs = document.getElementById('chat-msgs');
+  // User bubble
+  const ub = document.createElement('div');
+  ub.className = 'msg-bubble user';
+  ub.innerHTML = val + '<div class="msg-time">' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) + '</div>';
+  msgs.appendChild(ub);
+  inp.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+  // AI reply
+  setTimeout(() => {
+    const replies = [
+      "I understand. Let me adjust today's plan accordingly. Keep hydrated!",
+      "That's normal progress for Day 14. Your consistency is paying off.",
+      "I've noted that. Dr. Sharma will review it in your next session.",
+      "Try slowing down the movement to 3 counts up, 3 counts down. It helps.",
+      "Your gyroscope is showing good stability. Keep it up!"
+    ];
+    const ab = document.createElement('div');
+    ab.className = 'msg-bubble ai';
+    ab.innerHTML = replies[Math.floor(Math.random()*replies.length)] + '<div class="msg-time">' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) + '</div>';
+    msgs.appendChild(ab);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 900);
+}
+
+// ===== QR =====
+function openQR() { document.getElementById('qr-modal').classList.add('open'); }
+
+// ===== FULLSCREEN =====
+function exitFullScreen() {
+  if (document.exitFullscreen) document.exitFullscreen();
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  document.body.classList.remove('fullscreen');
+}
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement) document.body.classList.add('fullscreen');
+  else document.body.classList.remove('fullscreen');
+});
+
+// ===== LIVE FORM SCORE ANIMATION in modal =====
+setInterval(() => {
+  if (!document.getElementById('ex-modal').classList.contains('open')) return;
+  const scores = [
+    { id: 'fill-align', label: 's-align', current: 82, range: 8 },
+    { id: 'fill-balance', label: 's-balance', current: 74, range: 10 },
+    { id: 'fill-rom', label: 's-rom', current: 68, range: 12 },
+  ];
+  scores.forEach(s => {
+    const v = s.current + Math.floor((Math.random()-0.5)*s.range);
+    const val = Math.max(40, Math.min(100, v));
+    document.getElementById(s.id).style.width = val + '%';
+    document.getElementById(s.label).textContent = val + '%';
+  });
+}, 2500);
+</script>
+</body>
+</html>

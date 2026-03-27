@@ -1,0 +1,2377 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PhysioTrack — Doctor Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    /* Blue / White / Red clinical palette */
+    --blue-deepest: #0a1628;
+    --blue-navy: #0d2240;
+    --blue-dark: #0f3460;
+    --blue-mid: #1565c0;
+    --blue-brand: #1976d2;
+    --blue-bright: #2196f3;
+    --blue-light: #42a5f5;
+    --blue-pale: #90caf9;
+    --blue-frost: #bbdefb;
+    --blue-ice: #e3f2fd;
+    --blue-white: #f0f7ff;
+    --accent-cyan: #1565c0;
+    --accent-teal: #0d47a1;
+    --accent-steel: #4a6fa5;
+    --purple-prescribed: #7c3aed;
+    --blue-self: #1976d2;
+    --success: #1565c0;
+    --warning: #b45309;
+    --danger: #c62828;
+    --text-primary: #0a1628;
+    --text-secondary: #1565c0;
+    --text-muted: #90afd4;
+    --border: #c5d8f5;
+    --surface: #f0f7ff;
+    --card-bg: #ffffff;
+    --gold: #1976d2;
+    --gold-light: #bbdefb;
+    --gold-pale: #e3f2fd;
+    /* Red accent for alerts/highlights */
+    --red: #c62828;
+    --red-light: #ffcdd2;
+    --red-pale: #ffebee;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--blue-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 72px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--blue-deepest) 0%, var(--blue-navy) 60%, var(--blue-dark) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    box-shadow: 3px 0 24px rgba(10,22,40,0.28);
+    transition: width 0.24s cubic-bezier(0.4,0,0.2,1);
+    overflow: hidden;
+  }
+
+  .sidebar:hover {
+    width: 248px;
+  }
+
+  .sidebar-logo {
+    width: 248px;
+    min-width: 248px;
+    padding: 22px 0 18px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--blue-brand), var(--blue-bright));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(33,150,243,0.35);
+  }
+
+  .logo-icon svg { width: 20px; height: 20px; }
+
+  .logo-text {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    letter-spacing: -0.2px;
+    opacity: 0;
+    transition: opacity 0.15s 0.1s;
+    white-space: nowrap;
+  }
+
+  .sidebar:hover .logo-text { opacity: 1; }
+
+  .logo-sub {
+    font-size: 0.6rem;
+    color: var(--blue-pale);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 1px;
+    opacity: 0;
+    transition: opacity 0.15s 0.1s;
+  }
+
+  .sidebar:hover .logo-sub { opacity: 1; }
+
+  .doctor-info {
+    width: 248px;
+    min-width: 248px;
+    padding: 14px 0 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .doctor-avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #fff; font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+
+  .doctor-name {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s 0.1s;
+  }
+
+  .sidebar:hover .doctor-name { opacity: 1; }
+
+  .doctor-role {
+    color: var(--blue-pale);
+    font-size: 0.68rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s 0.1s;
+  }
+
+  .sidebar:hover .doctor-role { opacity: 1; }
+
+  .online-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    background: rgba(33,150,243,0.18);
+    border: 1px solid rgba(33,150,243,0.35);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 0.62rem;
+    color: var(--blue-light);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s 0.1s;
+  }
+
+  .sidebar:hover .online-badge { opacity: 1; }
+
+  .online-dot {
+    width: 5px; height: 5px;
+    background: var(--blue-light);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .nav-section {
+    padding: 12px 0 8px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 248px;
+    min-width: 248px;
+  }
+
+  .nav-label {
+    font-size: 0.58rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(144,202,249,0.4);
+    padding: 0 0 0 22px;
+    margin-bottom: 4px;
+    margin-top: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s 0.08s;
+    display: block;
+  }
+
+  .sidebar:hover .nav-label { opacity: 1; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px 9px 16px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.55);
+    font-weight: 400;
+    margin-bottom: 1px;
+    white-space: nowrap;
+    width: 248px;
+    min-width: 248px;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover {
+    background: rgba(33,150,243,0.14);
+    color: #fff;
+  }
+
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(25,118,210,0.35), transparent);
+    color: #fff;
+    font-weight: 600;
+    border-left: 3px solid var(--blue-bright);
+  }
+
+  .nav-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.16s;
+  }
+
+  .nav-item:hover .nav-icon { background: rgba(255,255,255,0.08); }
+  .nav-item.active .nav-icon { background: rgba(33,150,243,0.2); }
+
+  .nav-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  .nav-text {
+    opacity: 0;
+    transition: opacity 0.15s 0.08s;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sidebar:hover .nav-text { opacity: 1; }
+
+  .nav-badge {
+    margin-right: 10px;
+    background: var(--blue-bright);
+    color: #fff;
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    opacity: 0;
+    transition: opacity 0.15s 0.08s;
+    flex-shrink: 0;
+  }
+
+  .sidebar:hover .nav-badge { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 14px 0 14px 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.67rem;
+    color: rgba(144,202,249,0.3);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+    width: 248px;
+    min-width: 248px;
+    opacity: 0;
+    transition: opacity 0.15s 0.08s;
+    flex-shrink: 0;
+  }
+
+  .sidebar:hover .sidebar-footer { opacity: 1; }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 72px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 0;
+  }
+
+  .topbar {
+    background: #fff;
+    border-bottom: 1.5px solid var(--border);
+    padding: 0 28px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 16px rgba(10,22,40,0.07);
+    min-width: 0;
+  }
+
+  .topbar-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--blue-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .topbar-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 22px;
+    background: linear-gradient(to bottom, var(--blue-bright), var(--blue-mid));
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    border: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue-brand));
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(25,118,210,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(25,118,210,0.4);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--blue-brand);
+    border: 1.5px solid var(--blue-brand);
+  }
+
+  .btn-outline:hover {
+    background: var(--blue-ice);
+  }
+
+  .btn-ghost {
+    background: var(--blue-ice);
+    color: var(--blue-mid);
+  }
+
+  .btn-ghost:hover {
+    background: var(--blue-frost);
+  }
+
+  .btn-danger {
+    background: var(--red-pale);
+    color: var(--danger);
+    border: 1px solid var(--red-light);
+  }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 0.74rem;
+    border-radius: 7px;
+  }
+
+  .content-area {
+    padding: 24px 28px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    display: none;
+    animation: fadeIn 0.25s ease;
+    min-width: 0;
+  }
+
+  .panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 2px 14px rgba(10,22,40,0.05);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 22px 14px;
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to right, var(--blue-ice), #fff);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--blue-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .card-title svg { width: 16px; height: 16px; stroke: var(--blue-brand); fill: none; flex-shrink: 0; stroke-linecap: round; stroke-linejoin: round; }
+
+  .card-body { padding: 18px 22px; }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 22px 20px 20px 22px;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 4px 20px rgba(10,22,40,0.06);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 32px rgba(10,22,40,0.12);
+  }
+
+  /* Diagonal watermark shape in background */
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    right: -18px; bottom: -18px;
+    width: 90px; height: 90px;
+    border-radius: 22px;
+    background: var(--stat-color, var(--blue-brand));
+    opacity: 0.06;
+    transform: rotate(20deg);
+    pointer-events: none;
+  }
+
+  /* Thin top accent line — only 2px, full width */
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--stat-color, var(--blue-brand)), transparent 80%);
+  }
+
+  .stat-label {
+    font-size: 0.67rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--blue-dark);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  /* Trend chip — replaces dull stat-sub */
+  .stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    width: fit-content;
+  }
+
+  .stat-trend.up   { background: #e3f2fd; color: #1565c0; }
+  .stat-trend.warn { background: #fff8e1; color: #b45309; }
+  .stat-trend.alert{ background: #ffebee; color: #c62828; }
+  .stat-trend.neutral { background: #f1f5f9; color: #475569; }
+
+  .stat-icon {
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: var(--blue-ice);
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--border);
+  }
+
+  .stat-icon svg {
+    width: 18px; height: 18px;
+    stroke: var(--stat-color, var(--blue-brand));
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Stat card: subtle arrow hint on hover */
+  .stat-card .stat-arrow {
+    position: absolute;
+    bottom: 14px; right: 14px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--blue-ice);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.18s, transform 0.18s;
+  }
+  .stat-card:hover .stat-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .stat-arrow svg { width: 12px; height: 12px; stroke: var(--blue-brand); fill: none; stroke-width: 2.5; }
+
+  /* Alerts card pulse ring */
+  .stat-card[style*="c62828"] .stat-icon::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 16px;
+    border: 2px solid rgba(198,40,40,0.25);
+    animation: ring-pulse 2s infinite;
+  }
+
+  @keyframes ring-pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    60% { transform: scale(1.18); opacity: 0; }
+    100% { transform: scale(1.18); opacity: 0; }
+  }
+
+  /* Dashboard section title — unique greeting strip */
+  .dash-greeting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .dash-greeting-left {}
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--blue-dark);
+    margin-bottom: 3px;
+    line-height: 1.2;
+  }
+
+  .section-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0;
+  }
+
+  .dash-date-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(10,22,40,0.04);
+  }
+
+  .dash-date-badge svg { width: 15px; height: 15px; stroke: var(--blue-brand); fill: none; flex-shrink: 0; }
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  thead th {
+    background: var(--blue-ice);
+    color: var(--blue-dark);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+
+  tbody tr:hover { background: var(--blue-white); }
+
+  tbody td {
+    padding: 12px 16px;
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  .patient-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .patient-avatar {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.72rem; color: #fff;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .status-active { background: var(--blue-ice); color: var(--blue-mid); }
+  .status-inactive { background: #f1f5f9; color: #64748b; }
+  .status-pending { background: #fff8e1; color: #b45309; }
+  .status-alert { background: var(--red-pale); color: var(--danger); }
+
+  /* ── QR SECTION ── */
+  .qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: linear-gradient(135deg, var(--blue-ice), #fff);
+    border-radius: 14px;
+    border: 2px dashed var(--blue-frost);
+    text-align: center;
+    gap: 16px;
+  }
+
+  #qrcode {
+    padding: 16px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(26,54,40,0.1);
+    border: 1.5px solid var(--border);
+  }
+
+  .qr-info {
+    background: rgba(25,118,210,0.06);
+    border: 1px solid var(--blue-frost);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    max-width: 300px;
+    line-height: 1.5;
+  }
+
+  /* ── FORM ── */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+  }
+
+  .form-control:focus {
+    border-color: var(--blue-brand);
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.12);
+  }
+
+  select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231565c0'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* ── SCHEDULER ── */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+  }
+
+  .day-col {
+    background: var(--blue-white);
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    min-height: 260px;
+  }
+
+  .day-header {
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue-brand));
+    color: #fff;
+    padding: 9px 8px;
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .day-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 220px;
+  }
+
+  .exercise-chip {
+    background: linear-gradient(90deg, rgba(25,118,210,0.1), rgba(33,150,243,0.05));
+    border: 1px solid rgba(25,118,210,0.2);
+    border-left: 3px solid var(--blue-brand);
+    border-radius: 8px;
+    padding: 5px 7px;
+    font-size: 0.68rem;
+    color: var(--blue-dark);
+    position: relative;
+    cursor: grab;
+    transition: all 0.15s;
+  }
+
+  .exercise-chip:hover {
+    border-left-color: var(--blue-bright);
+    background: rgba(25,118,210,0.13);
+  }
+
+  .exercise-chip .chip-name {
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .exercise-chip .chip-meta {
+    color: var(--text-muted);
+    font-size: 0.62rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .chip-remove {
+    position: absolute;
+    top: 4px; right: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .chip-remove:hover { color: var(--danger); }
+
+  .add-exercise-btn {
+    border: 1.5px dashed var(--blue-pale);
+    background: transparent;
+    border-radius: 8px;
+    padding: 5px;
+    font-size: 0.68rem;
+    color: var(--blue-pale);
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .add-exercise-btn:hover {
+    border-color: var(--blue-brand);
+    color: var(--blue-brand);
+    background: var(--blue-ice);
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--blue-brand), var(--blue-frost));
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 18px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -22px;
+    top: 10px;
+    width: 12px; height: 12px;
+    border-radius: 4px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--dot-color, var(--blue-brand));
+    background: var(--dot-color, var(--blue-brand));
+  }
+
+  .timeline-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-left: 3px solid var(--event-color, var(--blue-brand));
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(26,54,40,0.05);
+    transition: box-shadow 0.15s;
+  }
+
+  .timeline-card:hover {
+    box-shadow: 0 4px 16px rgba(26,54,40,0.1);
+  }
+
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+  }
+
+  .timeline-event-name {
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: var(--blue-dark);
+  }
+
+  .timeline-time {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .timeline-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .meta-pill {
+    background: var(--blue-ice);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-size: 0.67rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .prescribed-pill {
+    background: #ede9fe;
+    color: var(--purple-prescribed);
+  }
+
+  .self-pill {
+    background: var(--blue-ice);
+    color: var(--blue-self);
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,28,18,0.52);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(10,28,18,0.28);
+    width: 540px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1.5px solid var(--border);
+    animation: slideUp 0.22s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(18px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    padding: 22px 26px 16px;
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to right, var(--blue-ice), #fff);
+  }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--blue-dark);
+  }
+
+  .modal-close {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    font-size: 1rem;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover {
+    background: var(--blue-ice);
+    border-color: var(--blue-brand);
+    color: var(--blue-brand);
+  }
+
+  .modal-body { padding: 22px 26px; }
+
+  .modal-footer {
+    padding: 16px 26px 22px;
+    border-top: 1.5px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* ── PHONE DEVICES ── */
+  .phone-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .phone-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--blue-white);
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+  }
+
+  .phone-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 0.9rem;
+  }
+
+  .phone-details { flex: 1; }
+
+  .phone-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--blue-dark);
+  }
+
+  .phone-id {
+    font-size: 0.68rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+  }
+
+  .phone-status-dot {
+    width: 8px; height: 8px;
+    border-radius: 3px;
+  }
+
+  .dot-green { background: #1976d2; }
+  .dot-grey { background: #d1d5db; }
+
+  /* ── SEARCH BAR ── */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 14px;
+    height: 40px;
+    transition: border-color 0.15s;
+  }
+
+  .search-bar:focus-within {
+    border-color: var(--blue-brand);
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+  }
+
+  .search-bar input {
+    border: none;
+    outline: none;
+    font-size: 0.83rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
+    flex: 1;
+    background: transparent;
+  }
+
+  .search-icon { color: var(--text-muted); font-size: 0.85rem; }
+
+  /* ── PROGRESS ── */
+  .progress-bar-outer {
+    background: var(--blue-frost);
+    border-radius: 20px;
+    height: 7px;
+    overflow: hidden;
+  }
+
+  .progress-bar-inner {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, var(--blue-mid), var(--blue-bright));
+    transition: width 0.5s ease;
+  }
+
+  /* ── COMPLIANCE LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+  }
+
+  .dot-purple { background: var(--purple-prescribed); }
+  .dot-blue { background: var(--blue-self); }
+
+  /* ── EXERCISE CATALOG ── */
+  .exercise-catalog {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .exercise-catalog-item {
+    background: var(--blue-ice);
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.78rem;
+  }
+
+  .exercise-catalog-item:hover {
+    border-color: var(--blue-brand);
+    background: var(--blue-ice);
+  }
+
+  .exercise-catalog-item.selected {
+    border-color: var(--blue-brand);
+    background: var(--blue-ice);
+    box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+  }
+
+  .ex-icon { font-size: 1.1rem; margin-bottom: 4px; }
+  .ex-name { font-weight: 700; color: var(--blue-dark); margin-bottom: 2px; }
+  .ex-body-part { font-size: 0.67rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--blue-ice); }
+  ::-webkit-scrollbar-thumb { background: var(--blue-pale); border-radius: 3px; }
+
+  /* ── TAB SWITCH ── */
+  .tab-bar {
+    display: flex;
+    gap: 3px;
+    background: var(--blue-ice);
+    border-radius: 11px;
+    padding: 4px;
+    margin-bottom: 20px;
+    width: fit-content;
+    border: 1.5px solid var(--border);
+  }
+
+  .tab-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    font-size: 0.79rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .tab-btn.active {
+    background: #fff;
+    color: var(--blue-dark);
+    font-weight: 700;
+    box-shadow: 0 1px 6px rgba(26,54,40,0.1);
+  }
+
+  /* ── INFO BANNER ── */
+  .info-banner {
+    background: linear-gradient(90deg, var(--blue-ice), #fff);
+    border: 1px solid var(--blue-frost);
+    border-left: 4px solid var(--blue-brand);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── COMPLIANCE CHART BARS ── */
+  .compliance-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 80px;
+    margin-top: 10px;
+  }
+
+  .c-bar {
+    flex: 1;
+    border-radius: 5px 5px 0 0;
+    transition: height 0.4s ease;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .c-bar:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--blue-dark);
+    color: #fff;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .c-bar.prescribed { background: var(--purple-prescribed); opacity: 0.85; }
+  .c-bar.self { background: var(--blue-self); opacity: 0.7; }
+
+  .c-bar-day {
+    font-size: 0.62rem;
+    text-align: center;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .c-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* notification dot */
+  .notif-dot {
+    width: 7px; height: 7px;
+    background: var(--blue-bright);
+    border-radius: 50%;
+    position: absolute;
+    top: 8px; right: 8px;
+  }
+
+  .relative { position: relative; }
+
+  /* ── RESPONSIVE OVERFLOW FIXES ── */
+  .stats-grid, .week-grid, .table-wrap, .card, .content-area, .panel { min-width: 0; }
+
+  /* Clamp all inline grids on small viewports */
+  @media (max-width: 960px) {
+    .content-area { padding: 16px 14px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .week-grid { grid-template-columns: repeat(4, 1fr); }
+    table { font-size: 0.76rem; }
+    thead th, tbody td { padding: 9px 10px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 680px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .week-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark" onclick="showPanel('dashboard')" style="cursor:pointer" title="Back to Dashboard">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4.8 2.3A.3.3 0 105 2H4a2 2 0 00-2 2v5a6 6 0 006 6 6 6 0 006-6V4a2 2 0 00-2-2h-1a.2.2 0 10.3.3"/>
+          <path d="M8 15v1a6 6 0 006 6 6 6 0 006-6v-4"/>
+          <circle cx="20" cy="10" r="2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">PhysioTrack</div>
+        <div class="logo-sub">Doctor Portal</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doctor-info">
+    <div class="doctor-avatar">DR</div>
+    <div class="doctor-name">Dr. Ramesh Iyer</div>
+    <div class="doctor-role">Orthopaedics · MBBS, MS</div>
+    <div class="online-badge"><span class="online-dot"></span>Online</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPanel('dashboard')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </span>
+      <span class="nav-text">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('patients')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </span>
+      <span class="nav-text">My Patients</span>
+      <span class="nav-badge">12</span>
+    </div>
+
+    <div class="nav-label">Management</div>
+    <div class="nav-item" onclick="showPanel('addpatient')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      </span>
+      <span class="nav-text">Add New Patient</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('scheduler')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </span>
+      <span class="nav-text">Exercise Scheduler</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('exercises')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 006 0V6a3 3 0 00-3-3z"/><path d="M6 3a3 3 0 013 3v12a3 3 0 01-6 0V6a3 3 0 013-3z"/><path d="M13 6H9"/><path d="M13 18H9"/><path d="M13 12H9"/></svg>
+      </span>
+      <span class="nav-text">Exercise Library</span>
+    </div>
+
+    <div class="nav-label">Monitoring</div>
+    <div class="nav-item relative" onclick="showPanel('timeline')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </span>
+      <span class="nav-text">Activity Timeline</span>
+      <span class="notif-dot"></span>
+    </div>
+    <div class="nav-item" onclick="showPanel('compliance')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </span>
+      <span class="nav-text">Compliance Reports</span>
+    </div>
+
+    <div class="nav-label">System</div>
+    <div class="nav-item" onclick="showPanel('qr')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3a2 2 0 00-2 2v3"/><line x1="21" y1="21" x2="21" y2="21"/><path d="M16 16h.01"/></svg>
+      </span>
+      <span class="nav-text">QR &amp; Device Mgmt</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('settings')">
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </span>
+      <span class="nav-text">Settings</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    v2.4.1 · RapidEngine Core<br>
+    © 2025 PhysioTrack
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-actions">
+      <div class="search-bar" style="width:220px">
+        <span class="search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" placeholder="Search patients…" />
+      </div>
+      <button class="btn btn-ghost btn-sm" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:9px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="showPanel('addpatient'); document.getElementById('topbar-title').textContent='Add New Patient'">+ New Patient</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content-area">
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="dash-greeting">
+        <div class="dash-greeting-left">
+          <div class="section-title">Good Morning, Dr. Iyer 👋</div>
+          <div class="section-sub">Tuesday, 25 March 2025 · 12 active patients</div>
+        </div>
+        <div class="dash-date-badge">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Tue, 25 Mar 2025
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <!-- Total Patients → patients panel -->
+        <div class="stat-card" style="--stat-color:#1976d2" onclick="showPanel('patients')" title="View Patient Registry">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="stat-label">Total Patients</div>
+          <div class="stat-value">12</div>
+          <div class="stat-trend up">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            +2 this week
+          </div>
+          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+
+        <!-- Sessions Today → timeline panel -->
+        <div class="stat-card" style="--stat-color:#0f3460" onclick="showPanel('timeline')" title="View Activity Timeline">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="stat-label">Sessions Today</div>
+          <div class="stat-value">8</div>
+          <div class="stat-trend neutral">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            3 completed · 5 pending
+          </div>
+          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+
+        <!-- Avg Compliance → compliance panel -->
+        <div class="stat-card" style="--stat-color:#7c3aed" onclick="showPanel('compliance')" title="View Compliance Reports">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="stat-label">Avg. Compliance</div>
+          <div class="stat-value">74<span style="font-size:1.1rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500">%</span></div>
+          <div class="stat-trend up">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            ↑ 6% vs last week
+          </div>
+          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+
+        <!-- Alerts → scrolls to alerts section on dashboard -->
+        <div class="stat-card" style="--stat-color:#c62828" onclick="showPanel('dashboard');setTimeout(()=>document.getElementById('alerts-section').scrollIntoView({behavior:'smooth'}),80)" title="View Flagged Alerts">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="stat-label">Alerts</div>
+          <div class="stat-value">3</div>
+          <div class="stat-trend alert">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            Needs attention now
+          </div>
+          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px">
+        <!-- Recent activity -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Recent Patient Activity
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="showPanel('timeline')">View All</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr>
+                <th>Patient</th>
+                <th>Exercise</th>
+                <th>Type</th>
+                <th>Time</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#1565c0,#42a5f5)">SA</div>Suresh A.</div></td>
+                  <td>Knee Flexion</td>
+                  <td><span class="status-badge" style="background:#ede9fe;color:#7c3aed">Prescribed</span></td>
+                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">09:14</td>
+                </tr>
+                <tr>
+                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#0d9488,#34d399)">PM</div>Priya M.</div></td>
+                  <td>Shoulder Roll</td>
+                  <td><span class="status-badge status-active">Self</span></td>
+                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">08:52</td>
+                </tr>
+                <tr>
+                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#dc2626,#fb923c)">RK</div>Rajesh K.</div></td>
+                  <td>Hip Abduction</td>
+                  <td><span class="status-badge" style="background:#ede9fe;color:#7c3aed">Prescribed</span></td>
+                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">08:30</td>
+                </tr>
+                <tr>
+                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">AN</div>Anita N.</div></td>
+                  <td>Wrist Curl</td>
+                  <td><span class="status-badge status-active">Self</span></td>
+                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">07:45</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Weekly compliance chart -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Weekly Compliance
+            </div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot dot-purple"></div>Prescribed</div>
+              <div class="legend-item"><div class="legend-dot dot-blue"></div>Self-initiated</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;gap:6px;height:100px;align-items:flex-end">
+              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:75%" data-tip="Mon·Presc.75%"></div><div class="c-bar-day">Mon</div></div>
+              <div class="c-bar-wrap"><div class="c-bar self" style="height:30%" data-tip="Mon·Self·30%"></div><div class="c-bar-day"></div></div>
+              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:90%" data-tip="Tue·Presc.90%"></div><div class="c-bar-day">Tue</div></div>
+              <div class="c-bar-wrap"><div class="c-bar self" style="height:50%" data-tip="Tue·Self·50%"></div><div class="c-bar-day"></div></div>
+              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:60%" data-tip="Wed·Presc.60%"></div><div class="c-bar-day">Wed</div></div>
+              <div class="c-bar-wrap"><div class="c-bar self" style="height:80%" data-tip="Wed·Self·80%"></div><div class="c-bar-day"></div></div>
+              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:40%" data-tip="Thu·Presc.40%"></div><div class="c-bar-day">Thu</div></div>
+              <div class="c-bar-wrap"><div class="c-bar self" style="height:20%" data-tip="Thu·Self·20%"></div><div class="c-bar-day"></div></div>
+              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:85%" data-tip="Fri·Presc.85%"></div><div class="c-bar-day">Fri</div></div>
+              <div class="c-bar-wrap"><div class="c-bar self" style="height:45%" data-tip="Fri·Self·45%"></div><div class="c-bar-day"></div></div>
+              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:55%" data-tip="Sat·Presc.55%"></div><div class="c-bar-day">Sat</div></div>
+              <div class="c-bar-wrap"><div class="c-bar self" style="height:70%" data-tip="Sat·Self·70%"></div><div class="c-bar-day"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="card" style="margin-top:20px" id="alerts-section">
+        <div class="card-header">
+          <div class="card-title">
+              <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Flagged Alerts
+            </div>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center">
+            <div style="width:38px;height:38px;border-radius:10px;background:#ffedd5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 6v4m0 4h.01"/></svg>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:0.83rem;color:#7c2d12">Suresh Anand — Incorrect Knee Form Detected</div>
+              <div style="font-size:0.72rem;color:#9a3412;margin-top:2px">3 repetitions with inward knee collapse · Today 09:14 AM · AI flagged for review</div>
+            </div>
+            <button class="btn btn-ghost btn-sm">Review</button>
+          </div>
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center">
+            <div style="width:38px;height:38px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/><path d="M9 7h6M9 11h4"/></svg>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:0.83rem;color:#7f1d1d">Anita Nair — 4 Sessions Missed Consecutively</div>
+              <div style="font-size:0.72rem;color:#991b1b;margin-top:2px">Last activity: Mar 21 · Prescribed routine not followed · Low engagement</div>
+            </div>
+            <button class="btn btn-ghost btn-sm">Contact</button>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center">
+            <div style="width:38px;height:38px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:0.83rem;color:#78350f">Rajesh Kumar — Phone Switch Detected</div>
+              <div style="font-size:0.72rem;color:#92400e;margin-top:2px">Secondary phone used as sensor during today's session · Sensor quality: Fair</div>
+            </div>
+            <button class="btn btn-ghost btn-sm">View</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ PATIENTS ══════════════ -->
+    <div class="panel" id="panel-patients">
+      <div class="section-title">Patient Registry</div>
+      <div class="section-sub">All enrolled patients with QR-based device binding</div>
+
+      <div style="display:flex;gap:12px;margin-bottom:18px;align-items:center">
+        <div class="search-bar" style="flex:1">
+          <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" placeholder="Search by name, ID, condition…" />
+        </div>
+        <select class="form-control" style="width:160px">
+          <option>All Status</option>
+          <option>Active</option>
+          <option>Inactive</option>
+          <option>Pending</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="showPanel('addpatient')">+ Add Patient</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Patient</th>
+              <th>ID</th>
+              <th>Condition</th>
+              <th>Devices</th>
+              <th>Last Active</th>
+              <th>Compliance</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="patient-table-body">
+              <!-- filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ ADD PATIENT ══════════════ -->
+    <div class="panel" id="panel-addpatient">
+      <div class="section-title">Add New Patient</div>
+      <div class="section-sub">Register patient and generate QR code for app onboarding</div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px">
+        <div>
+          <div class="card" style="margin-bottom:18px">
+            <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Personal Details</div></div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">First Name *</label>
+                  <input class="form-control" type="text" placeholder="Suresh" id="new-fname" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name *</label>
+                  <input class="form-control" type="text" placeholder="Anand" id="new-lname" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Date of Birth</label>
+                  <input class="form-control" type="date" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Gender</label>
+                  <select class="form-control">
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Mobile Number *</label>
+                  <input class="form-control" type="tel" placeholder="+91 98765 43210" id="new-phone" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input class="form-control" type="email" placeholder="patient@email.com" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Clinical Details</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Primary Diagnosis</label>
+                <select class="form-control">
+                  <option>Select diagnosis…</option>
+                  <option>ACL Tear — Post-op Rehab</option>
+                  <option>Rotator Cuff Injury</option>
+                  <option>Lumbar Disc Herniation</option>
+                  <option>Knee Osteoarthritis</option>
+                  <option>Frozen Shoulder</option>
+                  <option>Hip Replacement Rehab</option>
+                  <option>Stroke Rehabilitation</option>
+                  <option>Wrist Fracture Recovery</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Surgery Date</label>
+                  <input class="form-control" type="date" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Rehab Start Date</label>
+                  <input class="form-control" type="date" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Clinical Notes</label>
+                <textarea class="form-control" rows="3" placeholder="Post-op instructions, precautions, pain level baseline…" style="resize:vertical"></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Rehab Duration</label>
+                  <select class="form-control">
+                    <option>4 Weeks</option>
+                    <option>6 Weeks</option>
+                    <option>8 Weeks</option>
+                    <option>12 Weeks</option>
+                    <option>6 Months</option>
+                    <option>Ongoing</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Sessions / Week</label>
+                  <select class="form-control">
+                    <option>3 sessions</option>
+                    <option>5 sessions</option>
+                    <option>Daily</option>
+                    <option>Custom</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="generateQR()">Generate Patient QR &amp; Register →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR PANEL -->
+        <div>
+          <div class="card" style="margin-bottom:18px">
+            <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3a2 2 0 00-2 2v3"/><line x1="21" y1="21" x2="21" y2="21"/></svg> QR Code — App Onboarding</div></div>
+            <div class="card-body">
+              <div class="info-banner">
+                ℹ️ Patient scans this QR from the PhysioTrack app to bind their device. <strong>Multiple devices</strong> can scan the same QR for the same account.
+              </div>
+              <div class="qr-container" id="qr-section">
+                <div id="qrcode"></div>
+                <div class="qr-info" id="qr-info-text">Fill in patient details and click <strong>"Generate Patient QR"</strong> to create the onboarding QR code.</div>
+                <div id="qr-actions" style="display:none;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+                  <button class="btn btn-outline btn-sm">Download PNG</button>
+                  <button class="btn btn-ghost btn-sm" onclick="generateQR()">Regenerate</button>
+                  <button class="btn btn-ghost btn-sm">Email to Patient</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Linked Devices</div></div>
+            <div class="card-body">
+              <div class="info-banner" style="margin-bottom:12px">
+                Multiple phones can link to one patient account. The app auto-detects if a 2nd phone is available and uses it as a motion sensor.
+              </div>
+              <div class="phone-list" id="device-list">
+                <div style="text-align:center;color:var(--text-muted);font-size:0.78rem;padding:20px 0">No devices linked yet. Patient must scan QR to link.</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px">+ Manually Add Device</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ SCHEDULER ══════════════ -->
+    <div class="panel" id="panel-scheduler">
+      <div class="section-title">Exercise Scheduler</div>
+      <div class="section-sub">Build weekly routine or set same schedule for all days</div>
+
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+        <select class="form-control" style="width:200px">
+          <option>Select Patient…</option>
+          <option>Suresh Anand</option>
+          <option>Priya Mehta</option>
+          <option>Rajesh Kumar</option>
+          <option>Anita Nair</option>
+        </select>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" id="tab-weekly" onclick="switchSchedulerTab('weekly')">Week View</button>
+          <button class="tab-btn" id="tab-daily" onclick="switchSchedulerTab('daily')">Same Every Day</button>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm">Copy Last Week</button>
+          <button class="btn btn-primary btn-sm">Save Routine</button>
+        </div>
+      </div>
+
+      <!-- Weekly grid -->
+      <div id="scheduler-weekly">
+        <div class="week-grid" id="week-grid">
+          <!-- filled by JS -->
+        </div>
+        <div style="margin-top:14px;padding:12px 16px;background:var(--blue-ice);border-radius:10px;font-size:0.78rem;color:var(--text-secondary);border:1.5px solid var(--border)">
+          Click <strong>"+ Add"</strong> on any day to assign exercises. Drag chips between days to reorder. Each exercise chip stores sets, reps, and hold time.
+        </div>
+      </div>
+
+      <!-- Daily template -->
+      <div id="scheduler-daily" style="display:none">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Daily Template — Applied to All Days</div></div>
+          <div class="card-body">
+            <div id="daily-exercises" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+              <!-- chips -->
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="openExercisePicker(-1)">+ Add Exercise to Daily Template</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ TIMELINE ══════════════ -->
+    <div class="panel" id="panel-timeline">
+      <div class="section-title">Activity Timeline</div>
+      <div class="section-sub">All patient exercise sessions — prescribed vs self-initiated</div>
+
+      <div style="display:flex;gap:12px;margin-bottom:18px;align-items:center;flex-wrap:wrap">
+        <select class="form-control" style="width:190px">
+          <option>All Patients</option>
+          <option>Suresh Anand</option>
+          <option>Priya Mehta</option>
+          <option>Rajesh Kumar</option>
+        </select>
+        <select class="form-control" style="width:150px">
+          <option>Last 7 Days</option>
+          <option>Last 30 Days</option>
+          <option>Custom Range</option>
+        </select>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot dot-purple"></div>Prescribed (on schedule)</div>
+          <div class="legend-item"><div class="legend-dot dot-blue"></div>Self-initiated</div>
+        </div>
+      </div>
+
+      <div class="timeline" id="timeline-events">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- ══════════════ COMPLIANCE ══════════════ -->
+    <div class="panel" id="panel-compliance">
+      <div class="section-title">Compliance Reports</div>
+      <div class="section-sub">Per-patient adherence to prescribed routine</div>
+
+      <div style="display:flex;flex-direction:column;gap:16px" id="compliance-list">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- ══════════════ EXERCISES ══════════════ -->
+    <div class="panel" id="panel-exercises">
+      <div class="section-title">Exercise Library</div>
+      <div class="section-sub">All available exercises with ML model assignment and body region tagging</div>
+
+      <div style="display:flex;gap:12px;margin-bottom:18px;align-items:center">
+        <div class="search-bar" style="flex:1">
+          <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" placeholder="Search exercises…" />
+        </div>
+        <select class="form-control" style="width:160px">
+          <option>All Body Parts</option>
+          <option>Knee</option>
+          <option>Shoulder</option>
+          <option>Hip</option>
+          <option>Back</option>
+          <option>Wrist</option>
+          <option>Ankle</option>
+        </select>
+        <button class="btn btn-primary btn-sm">+ New Exercise</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" id="exercise-library">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- ══════════════ QR & DEVICES ══════════════ -->
+    <div class="panel" id="panel-qr">
+      <div class="section-title">QR &amp; Device Management</div>
+      <div class="section-sub">Per-patient multi-device binding and sensor assignment</div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Patient</th>
+              <th>Primary Device</th>
+              <th>Secondary Sensor</th>
+              <th>Sensor Mode</th>
+              <th>QR Status</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="device-table">
+              <!-- filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ SETTINGS ══════════════ -->
+    <div class="panel" id="panel-settings">
+      <div class="section-title">Settings</div>
+      <div class="section-sub">Portal preferences and notification configuration</div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> General</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Doctor Full Name</label><input class="form-control" value="Dr. Ramesh Iyer" /></div>
+            <div class="form-group"><label class="form-label">Specialisation</label><input class="form-control" value="Orthopaedics" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Hospital / Clinic</label><input class="form-control" value="Apollo Hospitals, Chennai" /></div>
+            <div class="form-group"><label class="form-label">Registration No.</label><input class="form-control" value="TN-MCI-28441" /></div>
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top:4px">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /main -->
+
+<!-- ══ MODAL: Exercise Picker ══ -->
+<div class="modal-overlay" id="exercisePickerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 006 0V6a3 3 0 00-3-3z"/><path d="M6 3a3 3 0 013 3v12a3 3 0 01-6 0V6a3 3 0 013-3z"/><path d="M13 6H9"/><path d="M13 18H9"/><path d="M13 12H9"/></svg>
+        Add Exercise
+      </div>
+      <button class="modal-close" onclick="closeModal('exercisePickerModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input class="form-control" placeholder="Search exercises…" style="margin-bottom:12px" />
+      <div class="exercise-catalog" id="exercise-picker-grid">
+        <!-- filled by JS -->
+      </div>
+      <div style="margin-top:16px;background:var(--blue-ice);border-radius:10px;padding:14px">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Sets</label><input class="form-control" type="number" value="3" /></div>
+          <div class="form-group"><label class="form-label">Reps</label><input class="form-control" type="number" value="10" /></div>
+          <div class="form-group"><label class="form-label">Hold (sec)</label><input class="form-control" type="number" value="0" /></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0"><label class="form-label">Notes for Patient</label><input class="form-control" placeholder="e.g. Stop if pain exceeds 4/10" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('exercisePickerModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addExerciseToDay()">Add to Schedule →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Patient Detail ══ -->
+<div class="modal-overlay" id="patientDetailModal">
+  <div class="modal" style="width:600px">
+    <div class="modal-header">
+      <div class="modal-title" id="pd-title">Patient Detail</div>
+      <button class="modal-close" onclick="closeModal('patientDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="pd-body"><!-- filled dynamically --></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('patientDetailModal')">Close</button>
+      <button class="btn btn-primary" onclick="showPanel('scheduler');closeModal('patientDetailModal')">Edit Schedule →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── DATA ─── */
+const PATIENTS = [
+  { id:'PT001', name:'Suresh Anand', initials:'SA', color:'linear-gradient(135deg,#1565c0,#42a5f5)', condition:'ACL Tear Rehab', devices:2, lastActive:'Today 09:14', compliance:82, status:'active' },
+  { id:'PT002', name:'Priya Mehta', initials:'PM', color:'linear-gradient(135deg,#0d9488,#34d399)', condition:'Frozen Shoulder', devices:1, lastActive:'Today 08:52', compliance:91, status:'active' },
+  { id:'PT003', name:'Rajesh Kumar', initials:'RK', color:'linear-gradient(135deg,#dc2626,#fb923c)', condition:'Hip Replacement', devices:2, lastActive:'Today 08:30', compliance:67, status:'alert' },
+  { id:'PT004', name:'Anita Nair', initials:'AN', color:'linear-gradient(135deg,#7c3aed,#a78bfa)', condition:'Lumbar Disc L4-L5', devices:1, lastActive:'Mar 21', compliance:34, status:'alert' },
+  { id:'PT005', name:'Deepak Verma', initials:'DV', color:'linear-gradient(135deg,#0f3460,#1976d2)', condition:'Wrist Fracture', devices:1, lastActive:'Yesterday', compliance:78, status:'active' },
+  { id:'PT006', name:'Kavya Srinivas', initials:'KS', color:'linear-gradient(135deg,#be185d,#f472b6)', condition:'Knee Osteoarthritis', devices:1, lastActive:'2 days ago', compliance:55, status:'pending' },
+];
+
+const EXERCISES = [
+  { name:'Knee Flexion', icon:'🦵', part:'Knee', model:'knee_flex_v2' },
+  { name:'Shoulder Roll', icon:'💪', part:'Shoulder', model:'shoulder_v1' },
+  { name:'Hip Abduction', icon:'🏃', part:'Hip', model:'hip_abd_v3' },
+  { name:'Wrist Curl', icon:'🤲', part:'Wrist', model:'wrist_v1' },
+  { name:'Calf Raise', icon:'🦶', part:'Ankle', model:'calf_v2' },
+  { name:'Wall Squat', icon:'🧱', part:'Knee/Hip', model:'squat_v3' },
+  { name:'Back Extension', icon:'🧘', part:'Back', model:'back_ext_v1' },
+  { name:'Straight Leg Raise', icon:'🦵', part:'Knee', model:'slr_v2' },
+  { name:'Shoulder Abduction', icon:'💪', part:'Shoulder', model:'sh_abd_v2' },
+  { name:'Bridge Exercise', icon:'🌉', part:'Hip/Back', model:'bridge_v2' },
+  { name:'Ankle Circles', icon:'🦶', part:'Ankle', model:'ankle_circ_v1' },
+  { name:'Neck Side Bend', icon:'🧑', part:'Neck', model:'neck_v1' },
+];
+
+const TIMELINE_EVENTS = [
+  { patient:'Suresh Anand', initials:'SA', color:'#1976d2', exercise:'Knee Flexion', type:'prescribed', time:'Today 09:14', sets:3, reps:10, compliance:92, form:'Good', notes:'Minor inward collapse in rep 7-9' },
+  { patient:'Priya Mehta', initials:'PM', color:'#0d9488', exercise:'Shoulder Roll', type:'self', time:'Today 08:52', sets:2, reps:15, compliance:100, form:'Excellent', notes:'' },
+  { patient:'Rajesh Kumar', initials:'RK', color:'#dc2626', exercise:'Hip Abduction', type:'prescribed', time:'Today 08:30', sets:3, reps:12, compliance:75, form:'Fair', notes:'Secondary phone used as sensor' },
+  { patient:'Suresh Anand', initials:'SA', color:'#1976d2', exercise:'Straight Leg Raise', type:'prescribed', time:'Yesterday 19:00', sets:3, reps:10, compliance:100, form:'Good', notes:'' },
+  { patient:'Anita Nair', initials:'AN', color:'#7c3aed', exercise:'Wrist Curl', type:'self', time:'Yesterday 07:30', sets:2, reps:20, compliance:60, form:'Poor', notes:'Wrist not in neutral position' },
+  { patient:'Deepak Verma', initials:'DV', color:'#0f3460', exercise:'Calf Raise', type:'prescribed', time:'Mar 24 16:45', sets:4, reps:15, compliance:88, form:'Good', notes:'' },
+];
+
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let weekSchedule = { Mon:[], Tue:['Knee Flexion·3×10'], Wed:['Hip Abduction·3×12','Calf Raise·4×15'], Thu:[], Fri:['Knee Flexion·3×10','Straight Leg Raise·3×10'], Sat:[], Sun:[] };
+let selectedDay = null;
+
+/* ─── PANEL NAV ─── */
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  const titles = { dashboard:'Dashboard', patients:'Patient Registry', addpatient:'Add New Patient', scheduler:'Exercise Scheduler', exercises:'Exercise Library', timeline:'Activity Timeline', compliance:'Compliance Reports', qr:'QR & Device Management', settings:'Settings' };
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+  const navMap = { dashboard:0, patients:1, addpatient:2, scheduler:3, exercises:4, timeline:5, compliance:6, qr:7, settings:8 };
+  const navItems = document.querySelectorAll('.nav-item');
+  if (navMap[id] !== undefined) navItems[navMap[id]].classList.add('active');
+}
+
+/* ─── PATIENTS TABLE ─── */
+function renderPatientsTable() {
+  const tbody = document.getElementById('patient-table-body');
+  tbody.innerHTML = PATIENTS.map(p => {
+    const statusMap = { active:'status-active', inactive:'status-inactive', pending:'status-pending', alert:'status-alert' };
+    return `<tr>
+      <td><div class="patient-name-cell"><div class="patient-avatar" style="background:${p.color}">${p.initials}</div><div><div style="font-weight:600">${p.name}</div><div style="font-size:0.68rem;color:var(--text-muted);font-family:'DM Mono',monospace">${p.id}</div></div></div></td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.75rem">${p.id}</td>
+      <td style="font-size:0.78rem">${p.condition}</td>
+      <td><span style="background:var(--blue-ice);color:var(--blue-mid);padding:2px 9px;border-radius:6px;font-size:0.7rem;font-family:'DM Mono',monospace;font-weight:600">${p.devices} dev</span></td>
+      <td style="font-size:0.75rem;color:var(--text-muted)">${p.lastActive}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-bar-outer" style="width:70px"><div class="progress-bar-inner" style="width:${p.compliance}%"></div></div>
+          <span style="font-size:0.75rem;font-family:'DM Mono',monospace;color:${p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)'}">${p.compliance}%</span>
+        </div>
+      </td>
+      <td><span class="status-badge ${statusMap[p.status]}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openPatientDetail('${p.id}')">View</button>
+          <button class="btn btn-outline btn-sm" onclick="showPanel('scheduler')">Schedule</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── QR CODE ─── */
+let qrGenerated = false;
+function generateQR() {
+  const fname = document.getElementById('new-fname').value || 'Patient';
+  const lname = document.getElementById('new-lname').value || '';
+  const phone = document.getElementById('new-phone').value || '0000000000';
+  const token = 'PT' + Math.random().toString(36).slice(2,8).toUpperCase();
+  const payload = JSON.stringify({ token, name: fname+' '+lname, phone, doctor:'DR001', ts: Date.now() });
+
+  const qrDiv = document.getElementById('qrcode');
+  qrDiv.innerHTML = '';
+  new QRCode(qrDiv, { text: payload, width: 160, height: 160, colorDark: '#0d2240', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+  document.getElementById('qr-info-text').innerHTML = `<strong>Token: ${token}</strong><br>Patient: ${fname} ${lname}<br>Scan from PhysioTrack app · Multiple phones supported`;
+  document.getElementById('qr-actions').style.display = 'flex';
+
+  // Mock: add a device to the list
+  if (!qrGenerated) {
+    document.getElementById('device-list').innerHTML = `
+      <div class="phone-item"><div class="phone-icon">📱</div><div class="phone-details"><div class="phone-name">iPhone 13 Pro</div><div class="phone-id">Primary · Last seen: just now</div></div><div class="phone-status-dot dot-green"></div></div>
+      <div class="phone-item" style="opacity:0.6"><div class="phone-icon" style="background:linear-gradient(135deg,#64748b,#94a3b8)">📱</div><div class="phone-details"><div class="phone-name">Awaiting 2nd Device…</div><div class="phone-id">Sensor mode · Not yet linked</div></div><div class="phone-status-dot dot-grey"></div></div>`;
+    qrGenerated = true;
+  }
+}
+
+/* ─── SCHEDULER ─── */
+function renderWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = DAYS.map(day => `
+    <div class="day-col">
+      <div class="day-header">${day}</div>
+      <div class="day-body" id="day-${day}">
+        ${(weekSchedule[day]||[]).map(ex => `
+          <div class="exercise-chip">
+            <button class="chip-remove" onclick="removeExFromDay('${day}','${ex}')">✕</button>
+            <div class="chip-name">${ex.split('·')[0]}</div>
+            <div class="chip-meta">${ex.split('·')[1]||''}</div>
+          </div>`).join('')}
+        <button class="add-exercise-btn" onclick="openExercisePicker('${day}')">+ Add</button>
+      </div>
+    </div>`).join('');
+}
+
+function switchSchedulerTab(tab) {
+  document.getElementById('tab-weekly').classList.toggle('active', tab==='weekly');
+  document.getElementById('tab-daily').classList.toggle('active', tab==='daily');
+  document.getElementById('scheduler-weekly').style.display = tab==='weekly'?'block':'none';
+  document.getElementById('scheduler-daily').style.display = tab==='daily'?'block':'none';
+}
+
+function removeExFromDay(day, ex) {
+  weekSchedule[day] = (weekSchedule[day]||[]).filter(e => e !== ex);
+  renderWeekGrid();
+}
+
+function openExercisePicker(day) {
+  selectedDay = day;
+  const grid = document.getElementById('exercise-picker-grid');
+  grid.innerHTML = EXERCISES.map(ex => `
+    <div class="exercise-catalog-item" onclick="this.classList.toggle('selected')">
+      <div class="ex-icon">${ex.icon}</div>
+      <div class="ex-name">${ex.name}</div>
+      <div class="ex-body-part">${ex.part}</div>
+    </div>`).join('');
+  document.getElementById('exercisePickerModal').classList.add('open');
+}
+
+function addExerciseToDay() {
+  const selected = document.querySelectorAll('.exercise-catalog-item.selected');
+  if (!selected.length) { closeModal('exercisePickerModal'); return; }
+  selected.forEach(el => {
+    const name = el.querySelector('.ex-name').textContent;
+    if (selectedDay !== -1) {
+      if (!weekSchedule[selectedDay]) weekSchedule[selectedDay] = [];
+      weekSchedule[selectedDay].push(name + '·3×10');
+    }
+  });
+  closeModal('exercisePickerModal');
+  renderWeekGrid();
+}
+
+/* ─── TIMELINE ─── */
+function renderTimeline() {
+  const container = document.getElementById('timeline-events');
+  container.innerHTML = TIMELINE_EVENTS.map(e => {
+    const isPrescribed = e.type === 'prescribed';
+    const dotColor = isPrescribed ? '#7c3aed' : '#2196f3';
+    const borderColor = isPrescribed ? '#7c3aed' : '#2196f3';
+    const formColor = e.form === 'Excellent' ? 'var(--blue-mid)' : e.form === 'Good' ? 'var(--blue-brand)' : e.form === 'Fair' ? 'var(--warning)' : 'var(--danger)';
+    return `<div class="timeline-item">
+      <div class="timeline-dot" style="--dot-color:${dotColor}"></div>
+      <div class="timeline-card" style="--event-color:${borderColor}">
+        <div class="timeline-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="patient-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:7px;background:${e.color};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${e.initials}</div>
+            <div>
+              <div class="timeline-event-name">${e.patient} — ${e.exercise}</div>
+              <div class="timeline-time">${e.time}</div>
+            </div>
+          </div>
+          <span class="status-badge ${isPrescribed ? '' : ''}" style="${isPrescribed ? 'background:#ede9fe;color:#7c3aed;border-radius:6px' : 'background:var(--blue-ice);color:var(--blue-mid);border-radius:6px'}">${isPrescribed ? '⬡ Prescribed' : '▷ Self'}</span>
+        </div>
+        <div class="timeline-meta">
+          <span class="meta-pill">${e.sets} sets × ${e.reps} reps</span>
+          <span class="meta-pill" style="color:${formColor};background:${formColor}22">Form: ${e.form}</span>
+          <span class="meta-pill">Compliance: ${e.compliance}%</span>
+          ${e.notes ? `<span class="meta-pill" style="background:#fef3c7;color:#92400e">⚠ ${e.notes}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── COMPLIANCE ─── */
+function renderCompliance() {
+  const container = document.getElementById('compliance-list');
+  container.innerHTML = PATIENTS.map(p => {
+    const color = p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)';
+    return `<div class="card">
+      <div style="padding:16px 22px;display:flex;align-items:center;gap:16px">
+        <div class="patient-avatar" style="width:44px;height:44px;font-size:0.85rem;background:${p.color};border-radius:12px">${p.initials}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:0.9rem;color:var(--blue-dark)">${p.name}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted)">${p.condition} · ${p.id}</div>
+        </div>
+        <div style="width:200px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:0.72rem;color:var(--text-muted)">Adherence</span>
+            <span style="font-size:0.8rem;font-weight:700;color:${color};font-family:'DM Mono',monospace">${p.compliance}%</span>
+          </div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${p.compliance}%;background:linear-gradient(90deg,${color},${color}99)"></div></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="showPanel('timeline')">Timeline</button>
+          <button class="btn btn-outline btn-sm">Report</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── EXERCISES LIBRARY ─── */
+function renderExerciseLibrary() {
+  const container = document.getElementById('exercise-library');
+  container.innerHTML = EXERCISES.map(ex => `
+    <div class="card" style="padding:18px;transition:box-shadow 0.15s;cursor:pointer" onmouseover="this.style.boxShadow='0 6px 20px rgba(21,101,192,0.12)'" onmouseout="this.style.boxShadow=''">
+      <div style="font-size:2rem;margin-bottom:8px">${ex.icon}</div>
+      <div style="font-weight:700;font-size:0.9rem;color:var(--blue-dark);margin-bottom:4px">${ex.name}</div>
+      <div style="font-size:0.7rem;font-family:'DM Mono',monospace;color:var(--accent-teal);margin-bottom:10px">${ex.part}</div>
+      <div style="background:var(--blue-ice);border-radius:8px;padding:8px 10px;margin-bottom:10px">
+        <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:2px">ML MODEL</div>
+        <div style="font-size:0.72rem;font-family:'DM Mono',monospace;color:var(--blue-mid)">${ex.model}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <span style="background:var(--blue-ice);color:var(--blue-mid);padding:2px 8px;border-radius:6px;font-size:0.65rem;font-weight:600">Form Detection</span>
+        <span style="background:#fff8e1;color:#b45309;padding:2px 8px;border-radius:6px;font-size:0.65rem;font-weight:600">Sensor</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ─── QR DEVICE TABLE ─── */
+function renderDeviceTable() {
+  const tbody = document.getElementById('device-table');
+  const data = [
+    { name:'Suresh Anand', primary:'iPhone 13 Pro', secondary:'OnePlus 9', mode:'Dual Sensor', qrStatus:'Active' },
+    { name:'Priya Mehta', primary:'Samsung S22', secondary:'—', mode:'Single', qrStatus:'Active' },
+    { name:'Rajesh Kumar', primary:'Redmi Note 12', secondary:'iPhone SE', mode:'Dual Sensor', qrStatus:'Active' },
+    { name:'Anita Nair', primary:'Pixel 7', secondary:'—', mode:'Single', qrStatus:'Expired' },
+  ];
+  tbody.innerHTML = data.map(d => `<tr>
+    <td style="font-weight:600;font-size:0.83rem">${d.name}</td>
+    <td><div style="display:flex;align-items:center;gap:6px"><span>📱</span><span style="font-size:0.78rem">${d.primary}</span></div></td>
+    <td><div style="display:flex;align-items:center;gap:6px"><span>${d.secondary!=='—'?'📱':'—'}</span><span style="font-size:0.78rem">${d.secondary}</span></div></td>
+    <td><span class="status-badge ${d.mode==='Dual Sensor'?'status-active':'status-inactive'}">${d.mode}</span></td>
+    <td><span class="status-badge ${d.qrStatus==='Active'?'status-active':'status-pending'}">${d.qrStatus}</span></td>
+    <td><div style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm">Regenerate QR</button>
+      <button class="btn btn-outline btn-sm">+ Link Device</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+/* ─── PATIENT DETAIL MODAL ─── */
+function openPatientDetail(id) {
+  const p = PATIENTS.find(x => x.id === id);
+  document.getElementById('pd-title').textContent = p.name + ' · ' + p.id;
+  document.getElementById('pd-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+      <div style="background:var(--blue-ice);border-radius:10px;padding:14px">
+        <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Condition</div>
+        <div style="font-weight:600;color:var(--blue-dark)">${p.condition}</div>
+      </div>
+      <div style="background:var(--blue-ice);border-radius:10px;padding:14px">
+        <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Compliance</div>
+        <div style="font-weight:700;color:${p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)'};font-size:1.3rem;font-family:'Fraunces',serif">${p.compliance}%</div>
+      </div>
+    </div>
+    <div style="background:var(--blue-ice);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:0.72rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px">LINKED DEVICES (${p.devices})</div>
+      ${p.devices>=1?'<div class="phone-item" style="margin-bottom:6px"><div class="phone-icon">📱</div><div class="phone-details"><div class="phone-name">Primary Device</div><div class="phone-id">Main tracking + UI</div></div><div class="phone-status-dot dot-green"></div></div>':''}
+      ${p.devices>=2?'<div class="phone-item"><div class="phone-icon" style="background:linear-gradient(135deg,#64748b,#94a3b8)">📱</div><div class="phone-details"><div class="phone-name">Secondary Device</div><div class="phone-id">Motion sensor mode</div></div><div class="phone-status-dot dot-green"></div></div>':''}
+    </div>
+    <div style="font-size:0.8rem;color:var(--text-secondary)">Last active: <strong>${p.lastActive}</strong></div>`;
+  document.getElementById('patientDetailModal').classList.add('open');
+}
+
+/* ─── MODAL HELPERS ─── */
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+/* ─── INIT ─── */
+renderPatientsTable();
+renderWeekGrid();
+renderTimeline();
+renderCompliance();
+renderExerciseLibrary();
+renderDeviceTable();
+</script>
+</body>
+</html>
