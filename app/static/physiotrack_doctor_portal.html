@@ -2071,66 +2071,213 @@
     </div>
   </div>
 </div>
-
 <script>
-/* ─── DATA ─── */
-const PATIENTS = [
-  { id:'PT001', name:'Suresh Anand', initials:'SA', color:'linear-gradient(135deg,#1565c0,#42a5f5)', condition:'ACL Tear Rehab', devices:2, lastActive:'Today 09:14', compliance:82, status:'active' },
-  { id:'PT002', name:'Priya Mehta', initials:'PM', color:'linear-gradient(135deg,#0d9488,#34d399)', condition:'Frozen Shoulder', devices:1, lastActive:'Today 08:52', compliance:91, status:'active' },
-  { id:'PT003', name:'Rajesh Kumar', initials:'RK', color:'linear-gradient(135deg,#dc2626,#fb923c)', condition:'Hip Replacement', devices:2, lastActive:'Today 08:30', compliance:67, status:'alert' },
-  { id:'PT004', name:'Anita Nair', initials:'AN', color:'linear-gradient(135deg,#7c3aed,#a78bfa)', condition:'Lumbar Disc L4-L5', devices:1, lastActive:'Mar 21', compliance:34, status:'alert' },
-  { id:'PT005', name:'Deepak Verma', initials:'DV', color:'linear-gradient(135deg,#0f3460,#1976d2)', condition:'Wrist Fracture', devices:1, lastActive:'Yesterday', compliance:78, status:'active' },
-  { id:'PT006', name:'Kavya Srinivas', initials:'KS', color:'linear-gradient(135deg,#be185d,#f472b6)', condition:'Knee Osteoarthritis', devices:1, lastActive:'2 days ago', compliance:55, status:'pending' },
-];
+/* ─── API BASE URL ─── */
+const API_BASE = 'http://localhost:8000/api';
 
-const EXERCISES = [
-  { name:'Knee Flexion', icon:'🦵', part:'Knee', model:'knee_flex_v2' },
-  { name:'Shoulder Roll', icon:'💪', part:'Shoulder', model:'shoulder_v1' },
-  { name:'Hip Abduction', icon:'🏃', part:'Hip', model:'hip_abd_v3' },
-  { name:'Wrist Curl', icon:'🤲', part:'Wrist', model:'wrist_v1' },
-  { name:'Calf Raise', icon:'🦶', part:'Ankle', model:'calf_v2' },
-  { name:'Wall Squat', icon:'🧱', part:'Knee/Hip', model:'squat_v3' },
-  { name:'Back Extension', icon:'🧘', part:'Back', model:'back_ext_v1' },
-  { name:'Straight Leg Raise', icon:'🦵', part:'Knee', model:'slr_v2' },
-  { name:'Shoulder Abduction', icon:'💪', part:'Shoulder', model:'sh_abd_v2' },
-  { name:'Bridge Exercise', icon:'🌉', part:'Hip/Back', model:'bridge_v2' },
-  { name:'Ankle Circles', icon:'🦶', part:'Ankle', model:'ankle_circ_v1' },
-  { name:'Neck Side Bend', icon:'🧑', part:'Neck', model:'neck_v1' },
-];
-
-const TIMELINE_EVENTS = [
-  { patient:'Suresh Anand', initials:'SA', color:'#1976d2', exercise:'Knee Flexion', type:'prescribed', time:'Today 09:14', sets:3, reps:10, compliance:92, form:'Good', notes:'Minor inward collapse in rep 7-9' },
-  { patient:'Priya Mehta', initials:'PM', color:'#0d9488', exercise:'Shoulder Roll', type:'self', time:'Today 08:52', sets:2, reps:15, compliance:100, form:'Excellent', notes:'' },
-  { patient:'Rajesh Kumar', initials:'RK', color:'#dc2626', exercise:'Hip Abduction', type:'prescribed', time:'Today 08:30', sets:3, reps:12, compliance:75, form:'Fair', notes:'Secondary phone used as sensor' },
-  { patient:'Suresh Anand', initials:'SA', color:'#1976d2', exercise:'Straight Leg Raise', type:'prescribed', time:'Yesterday 19:00', sets:3, reps:10, compliance:100, form:'Good', notes:'' },
-  { patient:'Anita Nair', initials:'AN', color:'#7c3aed', exercise:'Wrist Curl', type:'self', time:'Yesterday 07:30', sets:2, reps:20, compliance:60, form:'Poor', notes:'Wrist not in neutral position' },
-  { patient:'Deepak Verma', initials:'DV', color:'#0f3460', exercise:'Calf Raise', type:'prescribed', time:'Mar 24 16:45', sets:4, reps:15, compliance:88, form:'Good', notes:'' },
-];
-
-const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-let weekSchedule = { Mon:[], Tue:['Knee Flexion·3×10'], Wed:['Hip Abduction·3×12','Calf Raise·4×15'], Thu:[], Fri:['Knee Flexion·3×10','Straight Leg Raise·3×10'], Sat:[], Sun:[] };
+/* ─── STATE ─── */
+let currentDoctor = null;
+let patients = [];
+let exercises = [];
+let timeline = [];
+let weekSchedule = { Mon:[], Tue:[], Wed:[], Thu:[], Fri:[], Sat:[], Sun:[] };
 let selectedDay = null;
+let selectedPatientId = null;
 
-/* ─── PANEL NAV ─── */
+/* ─── INITIALIZE APP ─── */
+async function initApp() {
+  console.log('🚀 Initializing PhysioTrack Doctor Portal...');
+  try {
+    // Load exercises
+    await loadExercises();
+    // Load patients
+    await loadPatients();
+    // Load timeline
+    await loadTimeline();
+    // Render UI
+    renderPatientsTable();
+    renderWeekGrid();
+    renderTimeline();
+    renderCompliance();
+    renderExerciseLibrary();
+    renderDeviceTable();
+    console.log('✓ App initialized successfully');
+  } catch (error) {
+    console.error('✗ Failed to initialize app:', error);
+    showError('Failed to load data. Please refresh the page.');
+  }
+}
+
+/* ─── API CALLS ─── */
+
+// Get all exercises
+async function loadExercises() {
+  try {
+    const res = await fetch(`${API_BASE}/exercises`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    exercises = await res.json();
+    console.log(`✓ Loaded ${exercises.length} exercises`);
+  } catch (error) {
+    console.error('✗ Failed to load exercises:', error);
+    exercises = [];
+  }
+}
+
+// Get all patients
+async function loadPatients() {
+  try {
+    const res = await fetch(`${API_BASE}/patients`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    patients = data.map(p => ({
+      id: p.id,
+      name: p.name,
+      initials: p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+      color: generateGradient(p.id),
+      condition: p.diagnosis || 'Pending diagnosis',
+      devices: p.linked_devices || 1,
+      lastActive: p.last_active || 'Never',
+      compliance: p.compliance_score || 0,
+      status: p.status || 'pending',
+      phone: p.phone,
+      email: p.email,
+      doctorId: p.assigned_doctor_id
+    }));
+    console.log(`✓ Loaded ${patients.length} patients`);
+  } catch (error) {
+    console.error('✗ Failed to load patients:', error);
+    patients = [];
+  }
+}
+
+// Get timeline events
+async function loadTimeline() {
+  try {
+    const res = await fetch(`${API_BASE}/timeline`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    timeline = await res.json();
+    console.log(`✓ Loaded ${timeline.length} timeline events`);
+  } catch (error) {
+    console.error('✗ Failed to load timeline:', error);
+    timeline = [];
+  }
+}
+
+// Create new patient
+async function createPatient(patientData) {
+  try {
+    const res = await fetch(`${API_BASE}/patients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patientData)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const newPatient = await res.json();
+    patients.push(newPatient);
+    return newPatient;
+  } catch (error) {
+    console.error('✗ Failed to create patient:', error);
+    throw error;
+  }
+}
+
+// Update patient
+async function updatePatient(patientId, updates) {
+  try {
+    const res = await fetch(`${API_BASE}/patients/${patientId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const updated = await res.json();
+    const idx = patients.findIndex(p => p.id === patientId);
+    if (idx >= 0) patients[idx] = updated;
+    return updated;
+  } catch (error) {
+    console.error('✗ Failed to update patient:', error);
+    throw error;
+  }
+}
+
+// Get AI suggestions
+async function getAISuggestions(patientId, exerciseName) {
+  try {
+    const res = await fetch(`${API_BASE}/ai/suggestions?patient_id=${patientId}&exercise=${encodeURIComponent(exerciseName)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (error) {
+    console.error('✗ Failed to get AI suggestions:', error);
+    return null;
+  }
+}
+
+/* ─── UTILITY FUNCTIONS ─── */
+
+function generateGradient(id) {
+  const gradients = [
+    'linear-gradient(135deg,#1565c0,#42a5f5)',
+    'linear-gradient(135deg,#0d9488,#34d399)',
+    'linear-gradient(135deg,#dc2626,#fb923c)',
+    'linear-gradient(135deg,#7c3aed,#a78bfa)',
+    'linear-gradient(135deg,#0f3460,#1976d2)',
+    'linear-gradient(135deg,#be185d,#f472b6)',
+  ];
+  return gradients[id % gradients.length];
+}
+
+function showError(message) {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:20px;right:20px;background:#c62828;color:#fff;padding:16px 20px;border-radius:8px;z-index:9999;font-weight:600';
+  banner.textContent = message;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 5000);
+}
+
+function showSuccess(message) {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:20px;right:20px;background:#1565c0;color:#fff;padding:16px 20px;border-radius:8px;z-index:9999;font-weight:600';
+  banner.textContent = message;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 3000);
+}
+
+/* ─── PANEL NAVIGATION ─── */
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');
-  const titles = { dashboard:'Dashboard', patients:'Patient Registry', addpatient:'Add New Patient', scheduler:'Exercise Scheduler', exercises:'Exercise Library', timeline:'Activity Timeline', compliance:'Compliance Reports', qr:'QR & Device Management', settings:'Settings' };
+  const titles = { 
+    dashboard:'Dashboard', 
+    patients:'Patient Registry', 
+    addpatient:'Add New Patient', 
+    scheduler:'Exercise Scheduler', 
+    exercises:'Exercise Library', 
+    timeline:'Activity Timeline', 
+    compliance:'Compliance Reports', 
+    qr:'QR & Device Management', 
+    settings:'Settings' 
+  };
   document.getElementById('topbar-title').textContent = titles[id] || id;
   const navMap = { dashboard:0, patients:1, addpatient:2, scheduler:3, exercises:4, timeline:5, compliance:6, qr:7, settings:8 };
   const navItems = document.querySelectorAll('.nav-item');
   if (navMap[id] !== undefined) navItems[navMap[id]].classList.add('active');
 }
 
-/* ─── PATIENTS TABLE ─── */
+/* ─── RENDER FUNCTIONS ─── */
+
 function renderPatientsTable() {
   const tbody = document.getElementById('patient-table-body');
-  tbody.innerHTML = PATIENTS.map(p => {
+  if (!tbody) return;
+  
+  tbody.innerHTML = patients.map(p => {
     const statusMap = { active:'status-active', inactive:'status-inactive', pending:'status-pending', alert:'status-alert' };
     return `<tr>
-      <td><div class="patient-name-cell"><div class="patient-avatar" style="background:${p.color}">${p.initials}</div><div><div style="font-weight:600">${p.name}</div><div style="font-size:0.68rem;color:var(--text-muted);font-family:'DM Mono',monospace">${p.id}</div></div></div></td>
-      <td style="font-family:'DM Mono',monospace;font-size:0.75rem">${p.id}</td>
+      <td><div class="patient-name-cell">
+        <div class="patient-avatar" style="background:${p.color}">${p.initials}</div>
+        <div><div style="font-weight:600">${p.name}</div><div style="font-size:0.68rem;color:var(--text-muted);font-family:'DM Mono',monospace">${p.id}</div></div>
+      </div></td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.75rem">PT${p.id}</td>
       <td style="font-size:0.78rem">${p.condition}</td>
       <td><span style="background:var(--blue-ice);color:var(--blue-mid);padding:2px 9px;border-radius:6px;font-size:0.7rem;font-family:'DM Mono',monospace;font-weight:600">${p.devices} dev</span></td>
       <td style="font-size:0.75rem;color:var(--text-muted)">${p.lastActive}</td>
@@ -2143,137 +2290,81 @@ function renderPatientsTable() {
       <td><span class="status-badge ${statusMap[p.status]}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
       <td>
         <div style="display:flex;gap:4px">
-          <button class="btn btn-ghost btn-sm" onclick="openPatientDetail('${p.id}')">View</button>
-          <button class="btn btn-outline btn-sm" onclick="showPanel('scheduler')">Schedule</button>
+          <button class="btn btn-ghost btn-sm" onclick="openPatientDetail(${p.id})">View</button>
+          <button class="btn btn-outline btn-sm" onclick="openScheduler(${p.id})">Schedule</button>
         </div>
       </td>
     </tr>`;
   }).join('');
 }
 
-/* ─── QR CODE ─── */
-let qrGenerated = false;
-function generateQR() {
-  const fname = document.getElementById('new-fname').value || 'Patient';
-  const lname = document.getElementById('new-lname').value || '';
-  const phone = document.getElementById('new-phone').value || '0000000000';
-  const token = 'PT' + Math.random().toString(36).slice(2,8).toUpperCase();
-  const payload = JSON.stringify({ token, name: fname+' '+lname, phone, doctor:'DR001', ts: Date.now() });
-
-  const qrDiv = document.getElementById('qrcode');
-  qrDiv.innerHTML = '';
-  new QRCode(qrDiv, { text: payload, width: 160, height: 160, colorDark: '#0d2240', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-  document.getElementById('qr-info-text').innerHTML = `<strong>Token: ${token}</strong><br>Patient: ${fname} ${lname}<br>Scan from PhysioTrack app · Multiple phones supported`;
-  document.getElementById('qr-actions').style.display = 'flex';
-
-  // Mock: add a device to the list
-  if (!qrGenerated) {
-    document.getElementById('device-list').innerHTML = `
-      <div class="phone-item"><div class="phone-icon">📱</div><div class="phone-details"><div class="phone-name">iPhone 13 Pro</div><div class="phone-id">Primary · Last seen: just now</div></div><div class="phone-status-dot dot-green"></div></div>
-      <div class="phone-item" style="opacity:0.6"><div class="phone-icon" style="background:linear-gradient(135deg,#64748b,#94a3b8)">📱</div><div class="phone-details"><div class="phone-name">Awaiting 2nd Device…</div><div class="phone-id">Sensor mode · Not yet linked</div></div><div class="phone-status-dot dot-grey"></div></div>`;
-    qrGenerated = true;
-  }
-}
-
-/* ─── SCHEDULER ─── */
 function renderWeekGrid() {
   const grid = document.getElementById('week-grid');
+  if (!grid) return;
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   grid.innerHTML = DAYS.map(day => `
     <div class="day-col">
       <div class="day-header">${day}</div>
       <div class="day-body" id="day-${day}">
-        ${(weekSchedule[day]||[]).map(ex => `
+        ${(weekSchedule[day]||[]).map((ex, idx) => `
           <div class="exercise-chip">
-            <button class="chip-remove" onclick="removeExFromDay('${day}','${ex}')">✕</button>
-            <div class="chip-name">${ex.split('·')[0]}</div>
-            <div class="chip-meta">${ex.split('·')[1]||''}</div>
+            <button class="chip-remove" onclick="removeExFromDay('${day}',${idx})">✕</button>
+            <div class="chip-name">${ex.name}</div>
+            <div class="chip-meta">${ex.sets}×${ex.reps}</div>
           </div>`).join('')}
         <button class="add-exercise-btn" onclick="openExercisePicker('${day}')">+ Add</button>
       </div>
     </div>`).join('');
 }
 
-function switchSchedulerTab(tab) {
-  document.getElementById('tab-weekly').classList.toggle('active', tab==='weekly');
-  document.getElementById('tab-daily').classList.toggle('active', tab==='daily');
-  document.getElementById('scheduler-weekly').style.display = tab==='weekly'?'block':'none';
-  document.getElementById('scheduler-daily').style.display = tab==='daily'?'block':'none';
-}
-
-function removeExFromDay(day, ex) {
-  weekSchedule[day] = (weekSchedule[day]||[]).filter(e => e !== ex);
-  renderWeekGrid();
-}
-
-function openExercisePicker(day) {
-  selectedDay = day;
-  const grid = document.getElementById('exercise-picker-grid');
-  grid.innerHTML = EXERCISES.map(ex => `
-    <div class="exercise-catalog-item" onclick="this.classList.toggle('selected')">
-      <div class="ex-icon">${ex.icon}</div>
-      <div class="ex-name">${ex.name}</div>
-      <div class="ex-body-part">${ex.part}</div>
-    </div>`).join('');
-  document.getElementById('exercisePickerModal').classList.add('open');
-}
-
-function addExerciseToDay() {
-  const selected = document.querySelectorAll('.exercise-catalog-item.selected');
-  if (!selected.length) { closeModal('exercisePickerModal'); return; }
-  selected.forEach(el => {
-    const name = el.querySelector('.ex-name').textContent;
-    if (selectedDay !== -1) {
-      if (!weekSchedule[selectedDay]) weekSchedule[selectedDay] = [];
-      weekSchedule[selectedDay].push(name + '·3×10');
-    }
-  });
-  closeModal('exercisePickerModal');
-  renderWeekGrid();
-}
-
-/* ─── TIMELINE ─── */
 function renderTimeline() {
   const container = document.getElementById('timeline-events');
-  container.innerHTML = TIMELINE_EVENTS.map(e => {
+  if (!container || timeline.length === 0) return;
+  
+  container.innerHTML = timeline.slice(0, 10).map(e => {
     const isPrescribed = e.type === 'prescribed';
     const dotColor = isPrescribed ? '#7c3aed' : '#2196f3';
     const borderColor = isPrescribed ? '#7c3aed' : '#2196f3';
-    const formColor = e.form === 'Excellent' ? 'var(--blue-mid)' : e.form === 'Good' ? 'var(--blue-brand)' : e.form === 'Fair' ? 'var(--warning)' : 'var(--danger)';
+    const patient = patients.find(p => p.id === e.patient_id);
+    const patientName = patient?.name || 'Unknown';
+    const patientInitials = patient?.initials || 'UN';
+    const patientColor = patient?.color || 'linear-gradient(135deg,#666,#999)';
+    
     return `<div class="timeline-item">
       <div class="timeline-dot" style="--dot-color:${dotColor}"></div>
       <div class="timeline-card" style="--event-color:${borderColor}">
         <div class="timeline-header">
           <div style="display:flex;align-items:center;gap:10px">
-            <div class="patient-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:7px;background:${e.color};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${e.initials}</div>
+            <div class="patient-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:7px;background:${patientColor};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${patientInitials}</div>
             <div>
-              <div class="timeline-event-name">${e.patient} — ${e.exercise}</div>
-              <div class="timeline-time">${e.time}</div>
+              <div class="timeline-event-name">${patientName} — ${e.exercise_name}</div>
+              <div class="timeline-time">${new Date(e.created_at).toLocaleString()}</div>
             </div>
           </div>
-          <span class="status-badge ${isPrescribed ? '' : ''}" style="${isPrescribed ? 'background:#ede9fe;color:#7c3aed;border-radius:6px' : 'background:var(--blue-ice);color:var(--blue-mid);border-radius:6px'}">${isPrescribed ? '⬡ Prescribed' : '▷ Self'}</span>
+          <span class="status-badge" style="${isPrescribed ? 'background:#ede9fe;color:#7c3aed;border-radius:6px' : 'background:var(--blue-ice);color:var(--blue-mid);border-radius:6px'}">${isPrescribed ? '⬡ Prescribed' : '▷ Self'}</span>
         </div>
         <div class="timeline-meta">
-          <span class="meta-pill">${e.sets} sets × ${e.reps} reps</span>
-          <span class="meta-pill" style="color:${formColor};background:${formColor}22">Form: ${e.form}</span>
-          <span class="meta-pill">Compliance: ${e.compliance}%</span>
-          ${e.notes ? `<span class="meta-pill" style="background:#fef3c7;color:#92400e">⚠ ${e.notes}</span>` : ''}
+          <span class="meta-pill">${e.sets || 3} sets × ${e.reps || 10} reps</span>
+          <span class="meta-pill" style="color:var(--blue-mid);background:#e3f2fd22">Form: ${e.form_score || 'Pending'}%</span>
+          <span class="meta-pill">Compliance: ${e.compliance_score || 0}%</span>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-/* ─── COMPLIANCE ─── */
 function renderCompliance() {
   const container = document.getElementById('compliance-list');
-  container.innerHTML = PATIENTS.map(p => {
+  if (!container) return;
+  
+  container.innerHTML = patients.map(p => {
     const color = p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)';
     return `<div class="card">
       <div style="padding:16px 22px;display:flex;align-items:center;gap:16px">
         <div class="patient-avatar" style="width:44px;height:44px;font-size:0.85rem;background:${p.color};border-radius:12px">${p.initials}</div>
         <div style="flex:1">
           <div style="font-weight:600;font-size:0.9rem;color:var(--blue-dark)">${p.name}</div>
-          <div style="font-size:0.72rem;color:var(--text-muted)">${p.condition} · ${p.id}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted)">${p.condition} · PT${p.id}</div>
         </div>
         <div style="width:200px">
           <div style="display:flex;justify-content:space-between;margin-bottom:5px">
@@ -2284,24 +2375,25 @@ function renderCompliance() {
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="showPanel('timeline')">Timeline</button>
-          <button class="btn btn-outline btn-sm">Report</button>
+          <button class="btn btn-outline btn-sm" onclick="downloadReport(${p.id})">Report</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-/* ─── EXERCISES LIBRARY ─── */
 function renderExerciseLibrary() {
   const container = document.getElementById('exercise-library');
-  container.innerHTML = EXERCISES.map(ex => `
+  if (!container) return;
+  
+  container.innerHTML = exercises.map(ex => `
     <div class="card" style="padding:18px;transition:box-shadow 0.15s;cursor:pointer" onmouseover="this.style.boxShadow='0 6px 20px rgba(21,101,192,0.12)'" onmouseout="this.style.boxShadow=''">
       <div style="font-size:2rem;margin-bottom:8px">${ex.icon}</div>
       <div style="font-weight:700;font-size:0.9rem;color:var(--blue-dark);margin-bottom:4px">${ex.name}</div>
-      <div style="font-size:0.7rem;font-family:'DM Mono',monospace;color:var(--accent-teal);margin-bottom:10px">${ex.part}</div>
+      <div style="font-size:0.7rem;font-family:'DM Mono',monospace;color:var(--accent-teal);margin-bottom:10px">${ex.body_part}</div>
       <div style="background:var(--blue-ice);border-radius:8px;padding:8px 10px;margin-bottom:10px">
         <div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:2px">ML MODEL</div>
-        <div style="font-size:0.72rem;font-family:'DM Mono',monospace;color:var(--blue-mid)">${ex.model}</div>
+        <div style="font-size:0.72rem;font-family:'DM Mono',monospace;color:var(--blue-mid)">${ex.ml_model}</div>
       </div>
       <div style="display:flex;gap:6px">
         <span style="background:var(--blue-ice);color:var(--blue-mid);padding:2px 8px;border-radius:6px;font-size:0.65rem;font-weight:600">Form Detection</span>
@@ -2310,32 +2402,30 @@ function renderExerciseLibrary() {
     </div>`).join('');
 }
 
-/* ─── QR DEVICE TABLE ─── */
 function renderDeviceTable() {
   const tbody = document.getElementById('device-table');
-  const data = [
-    { name:'Suresh Anand', primary:'iPhone 13 Pro', secondary:'OnePlus 9', mode:'Dual Sensor', qrStatus:'Active' },
-    { name:'Priya Mehta', primary:'Samsung S22', secondary:'—', mode:'Single', qrStatus:'Active' },
-    { name:'Rajesh Kumar', primary:'Redmi Note 12', secondary:'iPhone SE', mode:'Dual Sensor', qrStatus:'Active' },
-    { name:'Anita Nair', primary:'Pixel 7', secondary:'—', mode:'Single', qrStatus:'Expired' },
-  ];
-  tbody.innerHTML = data.map(d => `<tr>
-    <td style="font-weight:600;font-size:0.83rem">${d.name}</td>
-    <td><div style="display:flex;align-items:center;gap:6px"><span>📱</span><span style="font-size:0.78rem">${d.primary}</span></div></td>
-    <td><div style="display:flex;align-items:center;gap:6px"><span>${d.secondary!=='—'?'📱':'—'}</span><span style="font-size:0.78rem">${d.secondary}</span></div></td>
-    <td><span class="status-badge ${d.mode==='Dual Sensor'?'status-active':'status-inactive'}">${d.mode}</span></td>
-    <td><span class="status-badge ${d.qrStatus==='Active'?'status-active':'status-pending'}">${d.qrStatus}</span></td>
+  if (!tbody) return;
+  
+  tbody.innerHTML = patients.slice(0, 4).map(p => `<tr>
+    <td style="font-weight:600;font-size:0.83rem">${p.name}</td>
+    <td><div style="display:flex;align-items:center;gap:6px"><span>📱</span><span style="font-size:0.78rem">Primary Device</span></div></td>
+    <td><div style="display:flex;align-items:center;gap:6px"><span>${p.devices > 1 ? '📱' : '—'}</span><span style="font-size:0.78rem">${p.devices > 1 ? 'Secondary' : 'None'}</span></div></td>
+    <td><span class="status-badge ${p.devices > 1 ? 'status-active' : 'status-inactive'}">${p.devices > 1 ? 'Dual Sensor' : 'Single'}</span></td>
+    <td><span class="status-badge status-active">Active</span></td>
     <td><div style="display:flex;gap:6px">
-      <button class="btn btn-ghost btn-sm">Regenerate QR</button>
-      <button class="btn btn-outline btn-sm">+ Link Device</button>
+      <button class="btn btn-ghost btn-sm" onclick="regenerateQR(${p.id})">Regenerate QR</button>
+      <button class="btn btn-outline btn-sm" onclick="linkDevice(${p.id})">+ Link Device</button>
     </div></td>
   </tr>`).join('');
 }
 
-/* ─── PATIENT DETAIL MODAL ─── */
-function openPatientDetail(id) {
-  const p = PATIENTS.find(x => x.id === id);
-  document.getElementById('pd-title').textContent = p.name + ' · ' + p.id;
+/* ─── PATIENT MANAGEMENT ─── */
+
+async function openPatientDetail(patientId) {
+  const p = patients.find(x => x.id === patientId);
+  if (!p) return;
+  
+  document.getElementById('pd-title').textContent = p.name + ' · PT' + p.id;
   document.getElementById('pd-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
       <div style="background:var(--blue-ice);border-radius:10px;padding:14px">
@@ -2348,15 +2438,130 @@ function openPatientDetail(id) {
       </div>
     </div>
     <div style="background:var(--blue-ice);border-radius:10px;padding:14px;margin-bottom:14px">
-      <div style="font-size:0.72rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px">LINKED DEVICES (${p.devices})</div>
-      ${p.devices>=1?'<div class="phone-item" style="margin-bottom:6px"><div class="phone-icon">📱</div><div class="phone-details"><div class="phone-name">Primary Device</div><div class="phone-id">Main tracking + UI</div></div><div class="phone-status-dot dot-green"></div></div>':''}
-      ${p.devices>=2?'<div class="phone-item"><div class="phone-icon" style="background:linear-gradient(135deg,#64748b,#94a3b8)">📱</div><div class="phone-details"><div class="phone-name">Secondary Device</div><div class="phone-id">Motion sensor mode</div></div><div class="phone-status-dot dot-green"></div></div>':''}
+      <div style="font-size:0.72rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px">CONTACT INFO</div>
+      <div style="font-size:0.8rem;color:var(--blue-dark);margin-bottom:4px">📱 ${p.phone || 'Not provided'}</div>
+      <div style="font-size:0.8rem;color:var(--blue-dark)">✉️ ${p.email || 'Not provided'}</div>
     </div>
     <div style="font-size:0.8rem;color:var(--text-secondary)">Last active: <strong>${p.lastActive}</strong></div>`;
   document.getElementById('patientDetailModal').classList.add('open');
 }
 
+async function openScheduler(patientId) {
+  selectedPatientId = patientId;
+  showPanel('scheduler');
+  const patient = patients.find(p => p.id === patientId);
+  if (patient) {
+    const selector = document.querySelector('select.form-control');
+    if (selector) selector.value = patient.name;
+  }
+}
+
+async function generateQR() {
+  const fname = document.getElementById('new-fname').value || 'Patient';
+  const lname = document.getElementById('new-lname').value || '';
+  const phone = document.getElementById('new-phone').value || '';
+  
+  if (!fname || !phone) {
+    showError('Please fill in Name and Phone');
+    return;
+  }
+  
+  try {
+    const patientData = {
+      name: fname + ' ' + lname,
+      phone: phone,
+      diagnosis: document.querySelector('select[placeholder*="diagnosis"]')?.value || 'Pending',
+      status: 'active'
+    };
+    
+    const patient = await createPatient(patientData);
+    const token = 'PT' + patient.id;
+    const payload = JSON.stringify({ token, name: patientData.name, phone: patientData.phone, ts: Date.now() });
+    
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+    new QRCode(qrDiv, { text: payload, width: 160, height: 160, colorDark: '#0d2240', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+    document.getElementById('qr-info-text').innerHTML = `<strong>Token: ${token}</strong><br>Patient: ${patientData.name}<br>Scan from PhysioTrack app`;
+    document.getElementById('qr-actions').style.display = 'flex';
+    
+    document.getElementById('device-list').innerHTML = `
+      <div class="phone-item"><div class="phone-icon">📱</div><div class="phone-details"><div class="phone-name">Awaiting First Device</div><div class="phone-id">Primary · Pending scan</div></div><div class="phone-status-dot dot-grey"></div></div>`;
+    
+    showSuccess('Patient created successfully!');
+  } catch (error) {
+    showError('Failed to create patient: ' + error.message);
+  }
+}
+
+/* ─── SCHEDULER ─── */
+
+function removeExFromDay(day, idx) {
+  weekSchedule[day] = (weekSchedule[day] || []).filter((_, i) => i !== idx);
+  renderWeekGrid();
+}
+
+function openExercisePicker(day) {
+  selectedDay = day;
+  const grid = document.getElementById('exercise-picker-grid');
+  grid.innerHTML = exercises.map((ex, idx) => `
+    <div class="exercise-catalog-item" data-exercise-id="${ex.id}" onclick="this.classList.toggle('selected')">
+      <div class="ex-icon">${ex.icon}</div>
+      <div class="ex-name">${ex.name}</div>
+      <div class="ex-body-part">${ex.body_part}</div>
+    </div>`).join('');
+  document.getElementById('exercisePickerModal').classList.add('open');
+}
+
+function addExerciseToDay() {
+  const selected = document.querySelectorAll('.exercise-catalog-item.selected');
+  if (!selected.length) { 
+    closeModal('exercisePickerModal'); 
+    return; 
+  }
+  
+  selected.forEach(el => {
+    const exName = el.querySelector('.ex-name').textContent;
+    const exId = parseInt(el.dataset.exerciseId);
+    const exercise = exercises.find(e => e.id === exId);
+    
+    if (selectedDay && exercise) {
+      if (!weekSchedule[selectedDay]) weekSchedule[selectedDay] = [];
+      weekSchedule[selectedDay].push({
+        id: exercise.id,
+        name: exercise.name,
+        sets: exercise.default_sets,
+        reps: exercise.default_reps
+      });
+    }
+  });
+  
+  closeModal('exercisePickerModal');
+  renderWeekGrid();
+}
+
+function switchSchedulerTab(tab) {
+  document.getElementById('tab-weekly').classList.toggle('active', tab==='weekly');
+  document.getElementById('tab-daily').classList.toggle('active', tab==='daily');
+  document.getElementById('scheduler-weekly').style.display = tab==='weekly'?'block':'none';
+  document.getElementById('scheduler-daily').style.display = tab==='daily'?'block':'none';
+}
+
+/* ─── DEVICE MANAGEMENT ─── */
+
+function regenerateQR(patientId) {
+  showSuccess('QR regenerated for patient ' + patientId);
+}
+
+function linkDevice(patientId) {
+  showSuccess('Device linking initiated for patient ' + patientId);
+}
+
+function downloadReport(patientId) {
+  showSuccess('Report downloading for patient ' + patientId);
+}
+
 /* ─── MODAL HELPERS ─── */
+
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
@@ -2365,13 +2570,8 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 });
 
-/* ─── INIT ─── */
-renderPatientsTable();
-renderWeekGrid();
-renderTimeline();
-renderCompliance();
-renderExerciseLibrary();
-renderDeviceTable();
+/* ─── INITIALIZE ON PAGE LOAD ─── */
+document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>

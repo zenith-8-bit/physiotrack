@@ -1,13 +1,12 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-import os
 
 from .database import engine
 from .models import Base
-from .api import exercises, users, patients, ai
+from .api import exercises, users, patients, ai, timeline
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -27,46 +26,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
-try:
-    static_path = Path(__file__).parent / "static"
-    if static_path.exists():
-        app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
-except Exception as e:
-    print(f"Warning: Could not mount static files: {e}")
+# Mount static files BEFORE routes
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    print(f"✓ Static files mounted from: {static_dir}")
+else:
+    print(f"⚠ WARNING: Static directory not found at {static_dir}")
 
 # Include API routers
 app.include_router(exercises.router)
 app.include_router(users.router)
 app.include_router(patients.router)
 app.include_router(ai.router)
-
-# --- ROUTES ---
-
+app.include_router(timeline.router)
+# Routes
 @app.get("/", response_class=HTMLResponse)
 def doctor_dashboard():
     """Serve doctor portal"""
     try:
-        with open("app/static/dashboard.html", "r", encoding="utf-8") as f:
+        with open(Path(__file__).parent / "static" / "physiotrack_doctor_portal.html", "r", encoding="utf-8") as f:
             return f.read()
-    except FileNotFoundError:
-        return "<h1>Doctor Portal HTML not found</h1>"
+    except FileNotFoundError as e:
+        return f"<h1>❌ Error: Doctor Portal HTML not found</h1><p>{e}</p>"
 
 @app.get("/mobile", response_class=HTMLResponse)
 def patient_dashboard():
     """Serve patient mobile dashboard"""
     try:
-        with open("app/static/phone.html", "r", encoding="utf-8") as f:
+        with open(Path(__file__).parent / "static" / "physioai_dashboard.html", "r", encoding="utf-8") as f:
             return f.read()
-    except FileNotFoundError:
-        return "<h1>Patient Dashboard HTML not found</h1>"
+    except FileNotFoundError as e:
+        return f"<h1>❌ Error: Patient Dashboard HTML not found</h1><p>{e}</p>"
 
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
     return {"status": "ok", "service": "PhysioAI Backend"}
 
-# Seed exercises on startup
+# Seed exercises
 @app.on_event("startup")
 def seed_data():
     from .database import SessionLocal
