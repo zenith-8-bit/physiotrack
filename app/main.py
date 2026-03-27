@@ -1,15 +1,20 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+import os
 
 from .database import engine
 from .models import Base
-from .api import exercises, users, patients, ai, timeline
+from .api import exercises, users, patients, ai, timeline, schedules, dashboard
+from .seed import seed_database
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
+
+# Seed database on startup
+seed_database()
 
 app = FastAPI(
     title="PhysioAI Backend",
@@ -26,79 +31,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files BEFORE routes
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-    print(f"✓ Static files mounted from: {static_dir}")
-else:
-    print(f"⚠ WARNING: Static directory not found at {static_dir}")
+# Mount static files
+try:
+    static_path = Path(__file__).parent / "static"
+    if static_path.exists():
+        app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+except Exception as e:
+    print(f"Warning: Could not mount static files: {e}")
 
-# Include API routers
+# Include API routers - ORDER MATTERS
 app.include_router(exercises.router)
 app.include_router(users.router)
 app.include_router(patients.router)
+app.include_router(schedules.router)  # ADD THIS LINE
 app.include_router(ai.router)
 app.include_router(timeline.router)
-# Routes
+app.include_router(dashboard.router)
 @app.get("/", response_class=HTMLResponse)
 def doctor_dashboard():
     """Serve doctor portal"""
     try:
-        with open(Path(__file__).parent / "static" / "physiotrack_doctor_portal.html", "r", encoding="utf-8") as f:
+        with open("app/static/physiotrack_doctor_portal.html", "r", encoding="utf-8") as f:
             return f.read()
-    except FileNotFoundError as e:
-        return f"<h1>❌ Error: Doctor Portal HTML not found</h1><p>{e}</p>"
+    except FileNotFoundError:
+        return "<h1>Doctor Portal HTML not found</h1>"
 
 @app.get("/mobile", response_class=HTMLResponse)
 def patient_dashboard():
     """Serve patient mobile dashboard"""
     try:
-        with open(Path(__file__).parent / "static" / "physioai_dashboard.html", "r", encoding="utf-8") as f:
+        with open("app/static/physioai_dashboard.html", "r", encoding="utf-8") as f:
             return f.read()
-    except FileNotFoundError as e:
-        return f"<h1>❌ Error: Patient Dashboard HTML not found</h1><p>{e}</p>"
+    except FileNotFoundError:
+        return "<h1>Patient Dashboard HTML not found</h1>"
 
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
     return {"status": "ok", "service": "PhysioAI Backend"}
-
-# Seed exercises
-@app.on_event("startup")
-def seed_data():
-    from .database import SessionLocal
-    from .models import Exercise
-    
-    db = SessionLocal()
-    try:
-        if db.query(Exercise).count() == 0:
-            exercises_data = [
-                {"name": "Knee Flexion", "icon": "🦵", "body_part": "Knee", "ml_model": "knee_flex_v2", "default_sets": 3, "default_reps": 10},
-                {"name": "Shoulder Roll", "icon": "💪", "body_part": "Shoulder", "ml_model": "shoulder_v1", "default_sets": 3, "default_reps": 15},
-                {"name": "Hip Abduction", "icon": "🏃", "body_part": "Hip", "ml_model": "hip_abd_v3", "default_sets": 3, "default_reps": 12},
-                {"name": "Wrist Curl", "icon": "🤲", "body_part": "Wrist", "ml_model": "wrist_v1", "default_sets": 3, "default_reps": 15},
-                {"name": "Calf Raise", "icon": "🦶", "body_part": "Ankle", "ml_model": "calf_v2", "default_sets": 4, "default_reps": 15},
-                {"name": "Wall Squat", "icon": "🧱", "body_part": "Knee/Hip", "ml_model": "squat_v3", "default_sets": 3, "default_reps": 1, "default_hold_seconds": 30},
-                {"name": "Back Extension", "icon": "🧘", "body_part": "Back", "ml_model": "back_ext_v1", "default_sets": 3, "default_reps": 10},
-                {"name": "Straight Leg Raise", "icon": "🦵", "body_part": "Knee", "ml_model": "slr_v2", "default_sets": 3, "default_reps": 10},
-                {"name": "Shoulder Abduction", "icon": "💪", "body_part": "Shoulder", "ml_model": "sh_abd_v2", "default_sets": 3, "default_reps": 12},
-                {"name": "Bridge Exercise", "icon": "🌉", "body_part": "Hip/Back", "ml_model": "bridge_v2", "default_sets": 3, "default_reps": 10},
-                {"name": "Ankle Circles", "icon": "🦶", "body_part": "Ankle", "ml_model": "ankle_circ_v1", "default_sets": 2, "default_reps": 20},
-                {"name": "Neck Side Bend", "icon": "🧑", "body_part": "Neck", "ml_model": "neck_v1", "default_sets": 3, "default_reps": 10},
-            ]
-            
-            for ex_data in exercises_data:
-                ex = Exercise(**ex_data)
-                db.add(ex)
-            
-            db.commit()
-            print("✓ Exercises seeded successfully")
-    except Exception as e:
-        print(f"Error seeding exercises: {e}")
-        db.rollback()
-    finally:
-        db.close()
 
 if __name__ == "__main__":
     import uvicorn

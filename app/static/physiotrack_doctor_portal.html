@@ -1464,7 +1464,7 @@
   </div>
 
   <div class="sidebar-footer">
-    v2.4.1 · RapidEngine Core<br>
+    v2.4.1 · made with love by team pandora<br>
     © 2025 PhysioTrack
   </div>
 </aside>
@@ -1491,198 +1491,135 @@
   <!-- CONTENT -->
   <div class="content-area">
 
-    <!-- ══════════════ DASHBOARD ══════════════ -->
-    <div class="panel active" id="panel-dashboard">
-      <div class="dash-greeting">
-        <div class="dash-greeting-left">
-          <div class="section-title">Good Morning, Dr. Iyer 👋</div>
-          <div class="section-sub">Tuesday, 25 March 2025 · 12 active patients</div>
+   <!-- ══════════════ DASHBOARD ══════════════ -->
+<div class="panel active" id="panel-dashboard">
+  <div class="dash-greeting">
+    <div class="dash-greeting-left">
+      <div class="section-title" id="greeting-title">Good Morning 👋</div>
+      <div class="section-sub" id="greeting-sub">Loading dashboard...</div>
+    </div>
+    <div class="dash-date-badge">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span id="current-date">Loading...</span>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <!-- Total Patients → patients panel -->
+    <div class="stat-card" style="--stat-color:#1976d2" onclick="showPanel('patients')" title="View Patient Registry">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <div class="stat-label">Total Patients</div>
+      <div class="stat-value" id="stat-total-patients">--</div>
+      <div class="stat-trend up">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        <span id="stat-patients-trend">+0 this week</span>
+      </div>
+      <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <!-- Sessions Today → timeline panel -->
+    <div class="stat-card" style="--stat-color:#0f3460" onclick="showPanel('timeline')" title="View Activity Timeline">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="stat-label">Sessions Today</div>
+      <div class="stat-value" id="stat-sessions-today">--</div>
+      <div class="stat-trend neutral">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        <span id="stat-sessions-detail">-- completed</span>
+      </div>
+      <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <!-- Avg Compliance → compliance panel -->
+    <div class="stat-card" style="--stat-color:#7c3aed" onclick="showPanel('compliance')" title="View Compliance Reports">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="stat-label">Avg. Compliance</div>
+      <div class="stat-value"><span id="stat-avg-compliance">--</span><span style="font-size:1.1rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500">%</span></div>
+      <div class="stat-trend up">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        <span id="stat-compliance-trend">vs last week</span>
+      </div>
+      <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <!-- Alerts → scrolls to alerts section on dashboard -->
+    <div class="stat-card" style="--stat-color:#c62828" onclick="showPanel('dashboard');setTimeout(()=>document.getElementById('alerts-section').scrollIntoView({behavior:'smooth'}),80)" title="View Flagged Alerts">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="stat-label">Alerts</div>
+      <div class="stat-value" id="stat-alerts-count">--</div>
+      <div class="stat-trend alert">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        <span id="stat-alerts-detail">Needs attention</span>
+      </div>
+      <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px">
+    <!-- Recent activity -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Recent Patient Activity
         </div>
-        <div class="dash-date-badge">
-          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Tue, 25 Mar 2025
+        <button class="btn btn-ghost btn-sm" onclick="showPanel('timeline')">View All</button>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table>
+          <thead><tr>
+            <th>Patient</th>
+            <th>Exercise</th>
+            <th>Type</th>
+            <th>Time</th>
+          </tr></thead>
+          <tbody id="recent-activity-tbody">
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">Loading activities...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Weekly compliance chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Weekly Compliance
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot dot-purple"></div>Prescribed</div>
+          <div class="legend-item"><div class="legend-dot dot-blue"></div>Self-initiated</div>
         </div>
       </div>
-
-      <div class="stats-grid">
-        <!-- Total Patients → patients panel -->
-        <div class="stat-card" style="--stat-color:#1976d2" onclick="showPanel('patients')" title="View Patient Registry">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-          </div>
-          <div class="stat-label">Total Patients</div>
-          <div class="stat-value">12</div>
-          <div class="stat-trend up">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-            +2 this week
-          </div>
-          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-
-        <!-- Sessions Today → timeline panel -->
-        <div class="stat-card" style="--stat-color:#0f3460" onclick="showPanel('timeline')" title="View Activity Timeline">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div class="stat-label">Sessions Today</div>
-          <div class="stat-value">8</div>
-          <div class="stat-trend neutral">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-            3 completed · 5 pending
-          </div>
-          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-
-        <!-- Avg Compliance → compliance panel -->
-        <div class="stat-card" style="--stat-color:#7c3aed" onclick="showPanel('compliance')" title="View Compliance Reports">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="stat-label">Avg. Compliance</div>
-          <div class="stat-value">74<span style="font-size:1.1rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500">%</span></div>
-          <div class="stat-trend up">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-            ↑ 6% vs last week
-          </div>
-          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-
-        <!-- Alerts → scrolls to alerts section on dashboard -->
-        <div class="stat-card" style="--stat-color:#c62828" onclick="showPanel('dashboard');setTimeout(()=>document.getElementById('alerts-section').scrollIntoView({behavior:'smooth'}),80)" title="View Flagged Alerts">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div class="stat-label">Alerts</div>
-          <div class="stat-value">3</div>
-          <div class="stat-trend alert">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-            Needs attention now
-          </div>
-          <div class="stat-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px">
-        <!-- Recent activity -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              Recent Patient Activity
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="showPanel('timeline')">View All</button>
-          </div>
-          <div class="card-body" style="padding:0">
-            <table>
-              <thead><tr>
-                <th>Patient</th>
-                <th>Exercise</th>
-                <th>Type</th>
-                <th>Time</th>
-              </tr></thead>
-              <tbody>
-                <tr>
-                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#1565c0,#42a5f5)">SA</div>Suresh A.</div></td>
-                  <td>Knee Flexion</td>
-                  <td><span class="status-badge" style="background:#ede9fe;color:#7c3aed">Prescribed</span></td>
-                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">09:14</td>
-                </tr>
-                <tr>
-                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#0d9488,#34d399)">PM</div>Priya M.</div></td>
-                  <td>Shoulder Roll</td>
-                  <td><span class="status-badge status-active">Self</span></td>
-                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">08:52</td>
-                </tr>
-                <tr>
-                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#dc2626,#fb923c)">RK</div>Rajesh K.</div></td>
-                  <td>Hip Abduction</td>
-                  <td><span class="status-badge" style="background:#ede9fe;color:#7c3aed">Prescribed</span></td>
-                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">08:30</td>
-                </tr>
-                <tr>
-                  <td><div class="patient-name-cell"><div class="patient-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">AN</div>Anita N.</div></td>
-                  <td>Wrist Curl</td>
-                  <td><span class="status-badge status-active">Self</span></td>
-                  <td style="font-family:'DM Mono',monospace;font-size:0.72rem">07:45</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Weekly compliance chart -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-              Weekly Compliance
-            </div>
-            <div class="legend">
-              <div class="legend-item"><div class="legend-dot dot-purple"></div>Prescribed</div>
-              <div class="legend-item"><div class="legend-dot dot-blue"></div>Self-initiated</div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div style="display:flex;gap:6px;height:100px;align-items:flex-end">
-              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:75%" data-tip="Mon·Presc.75%"></div><div class="c-bar-day">Mon</div></div>
-              <div class="c-bar-wrap"><div class="c-bar self" style="height:30%" data-tip="Mon·Self·30%"></div><div class="c-bar-day"></div></div>
-              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:90%" data-tip="Tue·Presc.90%"></div><div class="c-bar-day">Tue</div></div>
-              <div class="c-bar-wrap"><div class="c-bar self" style="height:50%" data-tip="Tue·Self·50%"></div><div class="c-bar-day"></div></div>
-              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:60%" data-tip="Wed·Presc.60%"></div><div class="c-bar-day">Wed</div></div>
-              <div class="c-bar-wrap"><div class="c-bar self" style="height:80%" data-tip="Wed·Self·80%"></div><div class="c-bar-day"></div></div>
-              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:40%" data-tip="Thu·Presc.40%"></div><div class="c-bar-day">Thu</div></div>
-              <div class="c-bar-wrap"><div class="c-bar self" style="height:20%" data-tip="Thu·Self·20%"></div><div class="c-bar-day"></div></div>
-              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:85%" data-tip="Fri·Presc.85%"></div><div class="c-bar-day">Fri</div></div>
-              <div class="c-bar-wrap"><div class="c-bar self" style="height:45%" data-tip="Fri·Self·45%"></div><div class="c-bar-day"></div></div>
-              <div class="c-bar-wrap"><div class="c-bar prescribed" style="height:55%" data-tip="Sat·Presc.55%"></div><div class="c-bar-day">Sat</div></div>
-              <div class="c-bar-wrap"><div class="c-bar self" style="height:70%" data-tip="Sat·Self·70%"></div><div class="c-bar-day"></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Alerts -->
-      <div class="card" style="margin-top:20px" id="alerts-section">
-        <div class="card-header">
-          <div class="card-title">
-              <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              Flagged Alerts
-            </div>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <div style="background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center">
-            <div style="width:38px;height:38px;border-radius:10px;background:#ffedd5;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 6v4m0 4h.01"/></svg>
-            </div>
-            <div style="flex:1">
-              <div style="font-weight:700;font-size:0.83rem;color:#7c2d12">Suresh Anand — Incorrect Knee Form Detected</div>
-              <div style="font-size:0.72rem;color:#9a3412;margin-top:2px">3 repetitions with inward knee collapse · Today 09:14 AM · AI flagged for review</div>
-            </div>
-            <button class="btn btn-ghost btn-sm">Review</button>
-          </div>
-          <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center">
-            <div style="width:38px;height:38px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/><path d="M9 7h6M9 11h4"/></svg>
-            </div>
-            <div style="flex:1">
-              <div style="font-weight:700;font-size:0.83rem;color:#7f1d1d">Anita Nair — 4 Sessions Missed Consecutively</div>
-              <div style="font-size:0.72rem;color:#991b1b;margin-top:2px">Last activity: Mar 21 · Prescribed routine not followed · Low engagement</div>
-            </div>
-            <button class="btn btn-ghost btn-sm">Contact</button>
-          </div>
-          <div style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:center">
-            <div style="width:38px;height:38px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
-            <div style="flex:1">
-              <div style="font-weight:700;font-size:0.83rem;color:#78350f">Rajesh Kumar — Phone Switch Detected</div>
-              <div style="font-size:0.72rem;color:#92400e;margin-top:2px">Secondary phone used as sensor during today's session · Sensor quality: Fair</div>
-            </div>
-            <button class="btn btn-ghost btn-sm">View</button>
-          </div>
+      <div class="card-body">
+        <div style="display:flex;gap:6px;height:100px;align-items:flex-end" id="weekly-compliance-chart">
+          <div style="text-align:center;color:var(--text-muted);width:100%">Loading data...</div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Alerts -->
+  <div class="card" style="margin-top:20px" id="alerts-section">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Flagged Alerts
+      </div>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px" id="alerts-container">
+      <div style="text-align:center;padding:20px;color:var(--text-muted)">Loading alerts...</div>
+    </div>
+  </div>
+</div>
 
     <!-- ══════════════ PATIENTS ══════════════ -->
     <div class="panel" id="panel-patients">
@@ -1864,56 +1801,50 @@
         </div>
       </div>
     </div>
+<!-- ══════════════ SCHEDULER ══════════════ -->
+<div class="panel" id="panel-scheduler">
+  <div class="section-title">Exercise Scheduler</div>
+  <div class="section-sub">Build weekly routine or set same schedule for all days</div>
 
-    <!-- ══════════════ SCHEDULER ══════════════ -->
-    <div class="panel" id="panel-scheduler">
-      <div class="section-title">Exercise Scheduler</div>
-      <div class="section-sub">Build weekly routine or set same schedule for all days</div>
+  <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+    <select class="form-control" id="scheduler-patient-select" style="width:200px" onchange="loadPatientSchedule()">
+      <option value="">Select Patient…</option>
+    </select>
 
-      <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
-        <select class="form-control" style="width:200px">
-          <option>Select Patient…</option>
-          <option>Suresh Anand</option>
-          <option>Priya Mehta</option>
-          <option>Rajesh Kumar</option>
-          <option>Anita Nair</option>
-        </select>
-
-        <div class="tab-bar">
-          <button class="tab-btn active" id="tab-weekly" onclick="switchSchedulerTab('weekly')">Week View</button>
-          <button class="tab-btn" id="tab-daily" onclick="switchSchedulerTab('daily')">Same Every Day</button>
-        </div>
-
-        <div style="margin-left:auto;display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm">Copy Last Week</button>
-          <button class="btn btn-primary btn-sm">Save Routine</button>
-        </div>
-      </div>
-
-      <!-- Weekly grid -->
-      <div id="scheduler-weekly">
-        <div class="week-grid" id="week-grid">
-          <!-- filled by JS -->
-        </div>
-        <div style="margin-top:14px;padding:12px 16px;background:var(--blue-ice);border-radius:10px;font-size:0.78rem;color:var(--text-secondary);border:1.5px solid var(--border)">
-          Click <strong>"+ Add"</strong> on any day to assign exercises. Drag chips between days to reorder. Each exercise chip stores sets, reps, and hold time.
-        </div>
-      </div>
-
-      <!-- Daily template -->
-      <div id="scheduler-daily" style="display:none">
-        <div class="card">
-          <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Daily Template — Applied to All Days</div></div>
-          <div class="card-body">
-            <div id="daily-exercises" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-              <!-- chips -->
-            </div>
-            <button class="btn btn-outline btn-sm" onclick="openExercisePicker(-1)">+ Add Exercise to Daily Template</button>
-          </div>
-        </div>
-      </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-weekly" onclick="switchSchedulerTab('weekly')">Week View</button>
+      <button class="tab-btn" id="tab-daily" onclick="switchSchedulerTab('daily')">Same Every Day</button>
     </div>
 
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="copyLastWeek()">Copy Last Week</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSchedule()">Save Routine</button>
+    </div>
+  </div>
+
+  <!-- Weekly grid -->
+  <div id="scheduler-weekly">
+    <div class="week-grid" id="week-grid">
+      <!-- filled by JS -->
+    </div>
+    <div style="margin-top:14px;padding:12px 16px;background:var(--blue-ice);border-radius:10px;font-size:0.78rem;color:var(--text-secondary);border:1.5px solid var(--border)">
+      Click <strong>"+ Add"</strong> on any day to assign exercises. Each exercise chip stores sets, reps, and hold time.
+    </div>
+  </div>
+
+  <!-- Daily template -->
+  <div id="scheduler-daily" style="display:none">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Daily Template — Applied to All Days</div></div>
+      <div class="card-body">
+        <div id="daily-exercises" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+          <!-- chips -->
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="openExercisePickerDaily()">+ Add Exercise to Daily Template</button>
+      </div>
+    </div>
+  </div>
+</div>
     <!-- ══════════════ TIMELINE ══════════════ -->
     <div class="panel" id="panel-timeline">
       <div class="section-title">Activity Timeline</div>
@@ -2088,14 +2019,11 @@ let selectedPatientId = null;
 async function initApp() {
   console.log('🚀 Initializing PhysioTrack Doctor Portal...');
   try {
-    // Load exercises
     await loadExercises();
-    // Load patients
     await loadPatients();
-    // Load timeline
     await loadTimeline();
-    // Render UI
     renderPatientsTable();
+    updatePatientSelectors();
     renderWeekGrid();
     renderTimeline();
     renderCompliance();
@@ -2104,17 +2032,14 @@ async function initApp() {
     console.log('✓ App initialized successfully');
   } catch (error) {
     console.error('✗ Failed to initialize app:', error);
-    showError('Failed to load data. Please refresh the page.');
   }
 }
 
 /* ─── API CALLS ─── */
 
-// Get all exercises
 async function loadExercises() {
   try {
     const res = await fetch(`${API_BASE}/exercises`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     exercises = await res.json();
     console.log(`✓ Loaded ${exercises.length} exercises`);
   } catch (error) {
@@ -2123,26 +2048,10 @@ async function loadExercises() {
   }
 }
 
-// Get all patients
 async function loadPatients() {
   try {
     const res = await fetch(`${API_BASE}/patients`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    patients = data.map(p => ({
-      id: p.id,
-      name: p.name,
-      initials: p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
-      color: generateGradient(p.id),
-      condition: p.diagnosis || 'Pending diagnosis',
-      devices: p.linked_devices || 1,
-      lastActive: p.last_active || 'Never',
-      compliance: p.compliance_score || 0,
-      status: p.status || 'pending',
-      phone: p.phone,
-      email: p.email,
-      doctorId: p.assigned_doctor_id
-    }));
+    patients = await res.json();
     console.log(`✓ Loaded ${patients.length} patients`);
   } catch (error) {
     console.error('✗ Failed to load patients:', error);
@@ -2150,11 +2059,9 @@ async function loadPatients() {
   }
 }
 
-// Get timeline events
 async function loadTimeline() {
   try {
     const res = await fetch(`${API_BASE}/timeline`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     timeline = await res.json();
     console.log(`✓ Loaded ${timeline.length} timeline events`);
   } catch (error) {
@@ -2163,7 +2070,6 @@ async function loadTimeline() {
   }
 }
 
-// Create new patient
 async function createPatient(patientData) {
   try {
     const res = await fetch(`${API_BASE}/patients`, {
@@ -2174,41 +2080,11 @@ async function createPatient(patientData) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const newPatient = await res.json();
     patients.push(newPatient);
+    updatePatientSelectors();
     return newPatient;
   } catch (error) {
     console.error('✗ Failed to create patient:', error);
     throw error;
-  }
-}
-
-// Update patient
-async function updatePatient(patientId, updates) {
-  try {
-    const res = await fetch(`${API_BASE}/patients/${patientId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const updated = await res.json();
-    const idx = patients.findIndex(p => p.id === patientId);
-    if (idx >= 0) patients[idx] = updated;
-    return updated;
-  } catch (error) {
-    console.error('✗ Failed to update patient:', error);
-    throw error;
-  }
-}
-
-// Get AI suggestions
-async function getAISuggestions(patientId, exerciseName) {
-  try {
-    const res = await fetch(`${API_BASE}/ai/suggestions?patient_id=${patientId}&exercise=${encodeURIComponent(exerciseName)}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch (error) {
-    console.error('✗ Failed to get AI suggestions:', error);
-    return null;
   }
 }
 
@@ -2240,6 +2116,16 @@ function showSuccess(message) {
   banner.textContent = message;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 3000);
+}
+
+function updatePatientSelectors() {
+  const selectors = document.querySelectorAll('select.form-control');
+  selectors.forEach(select => {
+    if (select.placeholder && select.placeholder.includes('Patient')) {
+      select.innerHTML = '<option>Select Patient…</option>' + 
+        patients.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+  });
 }
 
 /* ─── PANEL NAVIGATION ─── */
@@ -2274,17 +2160,17 @@ function renderPatientsTable() {
     const statusMap = { active:'status-active', inactive:'status-inactive', pending:'status-pending', alert:'status-alert' };
     return `<tr>
       <td><div class="patient-name-cell">
-        <div class="patient-avatar" style="background:${p.color}">${p.initials}</div>
-        <div><div style="font-weight:600">${p.name}</div><div style="font-size:0.68rem;color:var(--text-muted);font-family:'DM Mono',monospace">${p.id}</div></div>
+        <div class="patient-avatar" style="background:${generateGradient(p.id)}">${(p.name.match(/\b\w/g) || []).join('').toUpperCase().slice(0, 2)}</div>
+        <div><div style="font-weight:600">${p.name}</div><div style="font-size:0.68rem;color:var(--text-muted);font-family:'DM Mono',monospace">PT${String(p.id).padStart(3, '0')}</div></div>
       </div></td>
-      <td style="font-family:'DM Mono',monospace;font-size:0.75rem">PT${p.id}</td>
-      <td style="font-size:0.78rem">${p.condition}</td>
-      <td><span style="background:var(--blue-ice);color:var(--blue-mid);padding:2px 9px;border-radius:6px;font-size:0.7rem;font-family:'DM Mono',monospace;font-weight:600">${p.devices} dev</span></td>
-      <td style="font-size:0.75rem;color:var(--text-muted)">${p.lastActive}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.75rem">PT${String(p.id).padStart(3, '0')}</td>
+      <td style="font-size:0.78rem">${p.diagnosis}</td>
+      <td><span style="background:var(--blue-ice);color:var(--blue-mid);padding:2px 9px;border-radius:6px;font-size:0.7rem;font-family:'DM Mono',monospace;font-weight:600">${p.linked_devices} dev</span></td>
+      <td style="font-size:0.75rem;color:var(--text-muted)">${p.last_active}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px">
-          <div class="progress-bar-outer" style="width:70px"><div class="progress-bar-inner" style="width:${p.compliance}%"></div></div>
-          <span style="font-size:0.75rem;font-family:'DM Mono',monospace;color:${p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)'}">${p.compliance}%</span>
+          <div class="progress-bar-outer" style="width:70px"><div class="progress-bar-inner" style="width:${p.compliance_score}%"></div></div>
+          <span style="font-size:0.75rem;font-family:'DM Mono',monospace;color:${p.compliance_score>75?'var(--blue-mid)':p.compliance_score>50?'var(--warning)':'var(--danger)'}">${p.compliance_score}%</span>
         </div>
       </td>
       <td><span class="status-badge ${statusMap[p.status]}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
@@ -2325,10 +2211,9 @@ function renderTimeline() {
     const isPrescribed = e.type === 'prescribed';
     const dotColor = isPrescribed ? '#7c3aed' : '#2196f3';
     const borderColor = isPrescribed ? '#7c3aed' : '#2196f3';
+    const patientInitials = (e.patient_name.match(/\b\w/g) || []).join('').toUpperCase().slice(0, 2);
     const patient = patients.find(p => p.id === e.patient_id);
-    const patientName = patient?.name || 'Unknown';
-    const patientInitials = patient?.initials || 'UN';
-    const patientColor = patient?.color || 'linear-gradient(135deg,#666,#999)';
+    const patientColor = patient ? generateGradient(patient.id) : 'linear-gradient(135deg,#666,#999)';
     
     return `<div class="timeline-item">
       <div class="timeline-dot" style="--dot-color:${dotColor}"></div>
@@ -2337,16 +2222,17 @@ function renderTimeline() {
           <div style="display:flex;align-items:center;gap:10px">
             <div class="patient-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:7px;background:${patientColor};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${patientInitials}</div>
             <div>
-              <div class="timeline-event-name">${patientName} — ${e.exercise_name}</div>
+              <div class="timeline-event-name">${e.patient_name} — ${e.exercise_name}</div>
               <div class="timeline-time">${new Date(e.created_at).toLocaleString()}</div>
             </div>
           </div>
           <span class="status-badge" style="${isPrescribed ? 'background:#ede9fe;color:#7c3aed;border-radius:6px' : 'background:var(--blue-ice);color:var(--blue-mid);border-radius:6px'}">${isPrescribed ? '⬡ Prescribed' : '▷ Self'}</span>
         </div>
         <div class="timeline-meta">
-          <span class="meta-pill">${e.sets || 3} sets × ${e.reps || 10} reps</span>
-          <span class="meta-pill" style="color:var(--blue-mid);background:#e3f2fd22">Form: ${e.form_score || 'Pending'}%</span>
-          <span class="meta-pill">Compliance: ${e.compliance_score || 0}%</span>
+          <span class="meta-pill">${e.sets} sets × ${e.reps} reps</span>
+          <span class="meta-pill" style="color:var(--blue-mid);background:#e3f2fd22">Form: ${e.form_score}%</span>
+          <span class="meta-pill">Compliance: ${e.compliance_score}%</span>
+          ${e.notes ? `<span class="meta-pill" style="background:#fef3c7;color:#92400e">⚠ ${e.notes}</span>` : ''}
         </div>
       </div>
     </div>`;
@@ -2358,20 +2244,20 @@ function renderCompliance() {
   if (!container) return;
   
   container.innerHTML = patients.map(p => {
-    const color = p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)';
+    const color = p.compliance_score>75?'var(--blue-mid)':p.compliance_score>50?'var(--warning)':'var(--danger)';
     return `<div class="card">
       <div style="padding:16px 22px;display:flex;align-items:center;gap:16px">
-        <div class="patient-avatar" style="width:44px;height:44px;font-size:0.85rem;background:${p.color};border-radius:12px">${p.initials}</div>
+        <div class="patient-avatar" style="width:44px;height:44px;font-size:0.85rem;background:${generateGradient(p.id)};border-radius:12px">${(p.name.match(/\b\w/g) || []).join('').toUpperCase().slice(0, 2)}</div>
         <div style="flex:1">
           <div style="font-weight:600;font-size:0.9rem;color:var(--blue-dark)">${p.name}</div>
-          <div style="font-size:0.72rem;color:var(--text-muted)">${p.condition} · PT${p.id}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted)">${p.diagnosis} · PT${String(p.id).padStart(3, '0')}</div>
         </div>
         <div style="width:200px">
           <div style="display:flex;justify-content:space-between;margin-bottom:5px">
             <span style="font-size:0.72rem;color:var(--text-muted)">Adherence</span>
-            <span style="font-size:0.8rem;font-weight:700;color:${color};font-family:'DM Mono',monospace">${p.compliance}%</span>
+            <span style="font-size:0.8rem;font-weight:700;color:${color};font-family:'DM Mono',monospace">${p.compliance_score}%</span>
           </div>
-          <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${p.compliance}%;background:linear-gradient(90deg,${color},${color}99)"></div></div>
+          <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${p.compliance_score}%;background:linear-gradient(90deg,${color},${color}99)"></div></div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="showPanel('timeline')">Timeline</button>
@@ -2409,8 +2295,8 @@ function renderDeviceTable() {
   tbody.innerHTML = patients.slice(0, 4).map(p => `<tr>
     <td style="font-weight:600;font-size:0.83rem">${p.name}</td>
     <td><div style="display:flex;align-items:center;gap:6px"><span>📱</span><span style="font-size:0.78rem">Primary Device</span></div></td>
-    <td><div style="display:flex;align-items:center;gap:6px"><span>${p.devices > 1 ? '📱' : '—'}</span><span style="font-size:0.78rem">${p.devices > 1 ? 'Secondary' : 'None'}</span></div></td>
-    <td><span class="status-badge ${p.devices > 1 ? 'status-active' : 'status-inactive'}">${p.devices > 1 ? 'Dual Sensor' : 'Single'}</span></td>
+    <td><div style="display:flex;align-items:center;gap:6px"><span>${p.linked_devices > 1 ? '📱' : '—'}</span><span style="font-size:0.78rem">${p.linked_devices > 1 ? 'Secondary' : 'None'}</span></div></td>
+    <td><span class="status-badge ${p.linked_devices > 1 ? 'status-active' : 'status-inactive'}">${p.linked_devices > 1 ? 'Dual Sensor' : 'Single'}</span></td>
     <td><span class="status-badge status-active">Active</span></td>
     <td><div style="display:flex;gap:6px">
       <button class="btn btn-ghost btn-sm" onclick="regenerateQR(${p.id})">Regenerate QR</button>
@@ -2421,20 +2307,21 @@ function renderDeviceTable() {
 
 /* ─── PATIENT MANAGEMENT ─── */
 
-async function openPatientDetail(patientId) {
+function openPatientDetail(patientId) {
   const p = patients.find(x => x.id === patientId);
   if (!p) return;
   
-  document.getElementById('pd-title').textContent = p.name + ' · PT' + p.id;
+  const initials = (p.name.match(/\b\w/g) || []).join('').toUpperCase().slice(0, 2);
+  document.getElementById('pd-title').textContent = p.name + ' · PT' + String(p.id).padStart(3, '0');
   document.getElementById('pd-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
       <div style="background:var(--blue-ice);border-radius:10px;padding:14px">
         <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Condition</div>
-        <div style="font-weight:600;color:var(--blue-dark)">${p.condition}</div>
+        <div style="font-weight:600;color:var(--blue-dark)">${p.diagnosis}</div>
       </div>
       <div style="background:var(--blue-ice);border-radius:10px;padding:14px">
         <div style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Compliance</div>
-        <div style="font-weight:700;color:${p.compliance>75?'var(--blue-mid)':p.compliance>50?'var(--warning)':'var(--danger)'};font-size:1.3rem;font-family:'Fraunces',serif">${p.compliance}%</div>
+        <div style="font-weight:700;color:${p.compliance_score>75?'var(--blue-mid)':p.compliance_score>50?'var(--warning)':'var(--danger)'};font-size:1.3rem;font-family:'Fraunces',serif">${p.compliance_score}%</div>
       </div>
     </div>
     <div style="background:var(--blue-ice);border-radius:10px;padding:14px;margin-bottom:14px">
@@ -2442,11 +2329,11 @@ async function openPatientDetail(patientId) {
       <div style="font-size:0.8rem;color:var(--blue-dark);margin-bottom:4px">📱 ${p.phone || 'Not provided'}</div>
       <div style="font-size:0.8rem;color:var(--blue-dark)">✉️ ${p.email || 'Not provided'}</div>
     </div>
-    <div style="font-size:0.8rem;color:var(--text-secondary)">Last active: <strong>${p.lastActive}</strong></div>`;
+    <div style="font-size:0.8rem;color:var(--text-secondary)">Last active: <strong>${p.last_active}</strong></div>`;
   document.getElementById('patientDetailModal').classList.add('open');
 }
 
-async function openScheduler(patientId) {
+function openScheduler(patientId) {
   selectedPatientId = patientId;
   showPanel('scheduler');
   const patient = patients.find(p => p.id === patientId);
@@ -2457,7 +2344,7 @@ async function openScheduler(patientId) {
 }
 
 async function generateQR() {
-  const fname = document.getElementById('new-fname').value || 'Patient';
+  const fname = document.getElementById('new-fname').value || '';
   const lname = document.getElementById('new-lname').value || '';
   const phone = document.getElementById('new-phone').value || '';
   
@@ -2468,14 +2355,14 @@ async function generateQR() {
   
   try {
     const patientData = {
-      name: fname + ' ' + lname,
+      name: fname + (lname ? ' ' + lname : ''),
       phone: phone,
-      diagnosis: document.querySelector('select[placeholder*="diagnosis"]')?.value || 'Pending',
+      diagnosis: 'Pending diagnosis',
       status: 'active'
     };
     
     const patient = await createPatient(patientData);
-    const token = 'PT' + patient.id;
+    const token = 'PT' + String(patient.id).padStart(3, '0');
     const payload = JSON.stringify({ token, name: patientData.name, phone: patientData.phone, ts: Date.now() });
     
     const qrDiv = document.getElementById('qrcode');
@@ -2487,19 +2374,202 @@ async function generateQR() {
     document.getElementById('device-list').innerHTML = `
       <div class="phone-item"><div class="phone-icon">📱</div><div class="phone-details"><div class="phone-name">Awaiting First Device</div><div class="phone-id">Primary · Pending scan</div></div><div class="phone-status-dot dot-grey"></div></div>`;
     
+    // Clear form
+    document.getElementById('new-fname').value = '';
+    document.getElementById('new-lname').value = '';
+    document.getElementById('new-phone').value = '';
+    
+    // Refresh tables
+    renderPatientsTable();
+    renderCompliance();
+    updatePatientSelectors();
+    
     showSuccess('Patient created successfully!');
   } catch (error) {
     showError('Failed to create patient: ' + error.message);
   }
 }
 
-/* ─── SCHEDULER ─── */
+/* ─── SCHEDULER STATE ─── */
+let currentScheduleId = null;
+let isDailyTemplate = false;
 
+/* ─── UPDATE PATIENT SELECTORS ─── */
+function updatePatientSelectors() {
+  const selectors = document.querySelectorAll('select.form-control, select[id*="select"]');
+  selectors.forEach(select => {
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">Select Patient…</option>' + 
+      patients.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    if (currentValue) select.value = currentValue;
+  });
+}
+
+/* ─── LOAD PATIENT SCHEDULE ─── */
+async function loadPatientSchedule() {
+  const select = document.getElementById('scheduler-patient-select');
+  const patientId = parseInt(select.value);
+  
+  if (!patientId) {
+    weekSchedule = { Mon:[], Tue:[], Wed:[], Thu:[], Fri:[], Sat:[], Sun:[] };
+    isDailyTemplate = false;
+    renderWeekGrid();
+    renderDailyTemplate();
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE}/schedules/patient/${patientId}`);
+    const data = await res.json();
+    
+    currentScheduleId = data.id;
+    isDailyTemplate = data.is_daily_template;
+    
+    if (data.schedule_data && Object.keys(data.schedule_data).length > 0) {
+      weekSchedule = data.schedule_data;
+    } else {
+      weekSchedule = { Mon:[], Tue:[], Wed:[], Thu:[], Fri:[], Sat:[], Sun:[] };
+    }
+    
+    renderWeekGrid();
+    renderDailyTemplate();
+    showSuccess(`Loaded schedule for ${select.options[select.selectedIndex].text}`);
+  } catch (error) {
+    console.error('✗ Failed to load schedule:', error);
+    showError('Failed to load schedule');
+  }
+}
+
+/* ─── SAVE SCHEDULE ─── */
+async function saveSchedule() {
+  const select = document.getElementById('scheduler-patient-select');
+  const patientId = parseInt(select.value);
+  
+  if (!patientId) {
+    showError('Please select a patient first');
+    return;
+  }
+  
+  try {
+    // Convert weekSchedule format for API
+    const scheduleData = {};
+    for (const day in weekSchedule) {
+      scheduleData[day] = weekSchedule[day].map(ex => ({
+        id: ex.id,
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        hold_seconds: ex.hold_seconds || 0
+      }));
+    }
+    
+    const payload = {
+      patient_id: patientId,
+      schedule_data: scheduleData,
+      is_daily_template: isDailyTemplate
+    };
+    
+    const res = await fetch(`${API_BASE}/schedules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const result = await res.json();
+    
+    currentScheduleId = result.id;
+    showSuccess('Schedule saved successfully!');
+  } catch (error) {
+    console.error('✗ Failed to save schedule:', error);
+    showError('Failed to save schedule: ' + error.message);
+  }
+}
+
+/* ─── COPY LAST WEEK ─── */
+async function copyLastWeek() {
+  const select = document.getElementById('scheduler-patient-select');
+  const patientId = parseInt(select.value);
+  
+  if (!patientId) {
+    showError('Please select a patient first');
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE}/schedules/copy-last-week/${patientId}`, {
+      method: 'POST'
+    });
+    const result = await res.json();
+    
+    if (result.success && result.schedule_data) {
+      weekSchedule = result.schedule_data;
+      renderWeekGrid();
+      showSuccess('Last week\'s schedule loaded!');
+    } else {
+      showError(result.message || 'No previous schedule found');
+    }
+  } catch (error) {
+    console.error('✗ Failed to copy schedule:', error);
+    showError('Failed to copy schedule');
+  }
+}
+
+/* ─── RENDER WEEK GRID ─── */
+function renderWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  if (!grid) return;
+  
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  grid.innerHTML = DAYS.map(day => `
+    <div class="day-col">
+      <div class="day-header">${day}</div>
+      <div class="day-body" id="day-${day}">
+        ${(weekSchedule[day]||[]).map((ex, idx) => `
+          <div class="exercise-chip">
+            <button class="chip-remove" onclick="removeExFromDay('${day}',${idx})">✕</button>
+            <div class="chip-name">${ex.name}</div>
+            <div class="chip-meta">${ex.sets}×${ex.reps}${ex.hold_seconds ? '·'+ex.hold_seconds+'s' : ''}</div>
+          </div>`).join('')}
+        <button class="add-exercise-btn" onclick="openExercisePicker('${day}')">+ Add</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ─── RENDER DAILY TEMPLATE ─── */
+function renderDailyTemplate() {
+  const container = document.getElementById('daily-exercises');
+  if (!container) return;
+  
+  const dailyExercises = weekSchedule['Mon'] || []; // Use Monday as template
+  container.innerHTML = dailyExercises.map((ex, idx) => `
+    <div class="exercise-chip">
+      <button class="chip-remove" onclick="removeExFromDaily(${idx})">✕</button>
+      <div class="chip-name">${ex.name}</div>
+      <div class="chip-meta">${ex.sets}×${ex.reps}</div>
+    </div>`).join('');
+  
+  if (dailyExercises.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem">No exercises added. Click below to add.</div>';
+  }
+}
+
+/* ─── REMOVE EXERCISE ─── */
 function removeExFromDay(day, idx) {
   weekSchedule[day] = (weekSchedule[day] || []).filter((_, i) => i !== idx);
   renderWeekGrid();
 }
 
+function removeExFromDaily(idx) {
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  DAYS.forEach(day => {
+    weekSchedule[day] = (weekSchedule[day] || []).filter((_, i) => i !== idx);
+  });
+  renderWeekGrid();
+  renderDailyTemplate();
+}
+
+/* ─── OPEN EXERCISE PICKER ─── */
 function openExercisePicker(day) {
   selectedDay = day;
   const grid = document.getElementById('exercise-picker-grid');
@@ -2512,6 +2582,19 @@ function openExercisePicker(day) {
   document.getElementById('exercisePickerModal').classList.add('open');
 }
 
+function openExercisePickerDaily() {
+  selectedDay = 'daily';
+  const grid = document.getElementById('exercise-picker-grid');
+  grid.innerHTML = exercises.map((ex, idx) => `
+    <div class="exercise-catalog-item" data-exercise-id="${ex.id}" onclick="this.classList.toggle('selected')">
+      <div class="ex-icon">${ex.icon}</div>
+      <div class="ex-name">${ex.name}</div>
+      <div class="ex-body-part">${ex.body_part}</div>
+    </div>`).join('');
+  document.getElementById('exercisePickerModal').classList.add('open');
+}
+
+/* ─── ADD EXERCISE TO DAY ─── */
 function addExerciseToDay() {
   const selected = document.querySelectorAll('.exercise-catalog-item.selected');
   if (!selected.length) { 
@@ -2520,32 +2603,51 @@ function addExerciseToDay() {
   }
   
   selected.forEach(el => {
-    const exName = el.querySelector('.ex-name').textContent;
     const exId = parseInt(el.dataset.exerciseId);
     const exercise = exercises.find(e => e.id === exId);
     
-    if (selectedDay && exercise) {
-      if (!weekSchedule[selectedDay]) weekSchedule[selectedDay] = [];
-      weekSchedule[selectedDay].push({
-        id: exercise.id,
-        name: exercise.name,
-        sets: exercise.default_sets,
-        reps: exercise.default_reps
-      });
+    if (exercise) {
+      if (selectedDay === 'daily') {
+        // Add to all days
+        const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        DAYS.forEach(day => {
+          if (!weekSchedule[day]) weekSchedule[day] = [];
+          weekSchedule[day].push({
+            id: exercise.id,
+            name: exercise.name,
+            sets: exercise.default_sets,
+            reps: exercise.default_reps,
+            hold_seconds: exercise.default_hold_seconds || 0
+          });
+        });
+        isDailyTemplate = true;
+        renderDailyTemplate();
+      } else if (selectedDay) {
+        // Add to specific day
+        if (!weekSchedule[selectedDay]) weekSchedule[selectedDay] = [];
+        weekSchedule[selectedDay].push({
+          id: exercise.id,
+          name: exercise.name,
+          sets: exercise.default_sets,
+          reps: exercise.default_reps,
+          hold_seconds: exercise.default_hold_seconds || 0
+        });
+      }
     }
   });
   
   closeModal('exercisePickerModal');
   renderWeekGrid();
+  showSuccess('Exercise added to schedule!');
 }
 
+/* ─── SWITCH TAB ─── */
 function switchSchedulerTab(tab) {
   document.getElementById('tab-weekly').classList.toggle('active', tab==='weekly');
   document.getElementById('tab-daily').classList.toggle('active', tab==='daily');
   document.getElementById('scheduler-weekly').style.display = tab==='weekly'?'block':'none';
   document.getElementById('scheduler-daily').style.display = tab==='daily'?'block':'none';
 }
-
 /* ─── DEVICE MANAGEMENT ─── */
 
 function regenerateQR(patientId) {
@@ -2569,7 +2671,255 @@ function closeModal(id) {
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 });
+/* ═══════════════════════════════════════════════════════════════ */
+/* DASHBOARD INITIALIZATION */
+/* ═══════════════════════════════════════════════════════════════ */
 
+// Initialize dashboard when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Set current date
+  updateCurrentDate();
+  
+  // Load all dashboard data
+  loadDashboardData();
+  
+  // Refresh every 30 seconds
+  setInterval(loadDashboardData, 30000);
+});
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* UPDATE CURRENT DATE */
+/* ═══════════════════════════════════════════════════════════════ */
+
+function updateCurrentDate() {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  const now = new Date();
+  const dayName = days[now.getDay()];
+  const date = now.getDate();
+  const month = months[now.getMonth()];
+  const year = now.getFullYear();
+  
+  const dateStr = `${dayName.substr(0, 3)}, ${date} ${month} ${year}`;
+  document.getElementById('current-date').textContent = dateStr;
+  
+  const hour = now.getHours();
+  let greeting = 'Good Morning';
+  if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
+  else if (hour >= 17) greeting = 'Good Evening';
+  
+  document.getElementById('greeting-title').textContent = `${greeting} 👋`;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* LOAD DASHBOARD DATA */
+/* ═══════════════════════════════════════════════════════════════ */
+
+async function loadDashboardData() {
+  try {
+    // Load stats
+    await loadDashboardStats();
+    
+    // Load recent activity
+    await loadRecentActivity();
+    
+    // Load weekly compliance
+    await loadWeeklyCompliance();
+    
+    // Load alerts
+    await loadAlerts();
+  } catch (error) {
+    console.error('✗ Dashboard load error:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* LOAD STATS */
+/* ═══════════════════════════════════════════════════════════════ */
+
+async function loadDashboardStats() {
+  try {
+    const res = await fetch(`${API_BASE}/dashboard/stats`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    
+    document.getElementById('stat-total-patients').textContent = data.total_patients;
+    document.getElementById('stat-sessions-today').textContent = data.sessions_today;
+    document.getElementById('stat-avg-compliance').textContent = data.avg_compliance;
+    document.getElementById('stat-alerts-count').textContent = data.total_alerts;
+    
+    // Set greeting
+    document.getElementById('greeting-sub').textContent = 
+      `${data.total_patients} active patients · ${data.sessions_today} sessions today`;
+    
+  } catch (error) {
+    console.error('✗ Failed to load stats:', error);
+    showError('Failed to load dashboard statistics');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* LOAD RECENT ACTIVITY */
+/* ═══════════════════════════════════════════════════════════════ */
+
+async function loadRecentActivity() {
+  try {
+    const res = await fetch(`${API_BASE}/dashboard/recent-activity?limit=4`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    
+    const tbody = document.getElementById('recent-activity-tbody');
+    
+    if (!data.activities || data.activities.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">
+            No recent activity yet
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tbody.innerHTML = data.activities.map(activity => `
+      <tr>
+        <td>
+          <div class="patient-name-cell">
+            <div class="patient-avatar" style="background:${activity.patient_color}">
+              ${activity.patient_initials}
+            </div>
+            ${activity.patient_name}
+          </div>
+        </td>
+        <td>${activity.exercise_name}</td>
+        <td>
+          <span class="status-badge" style="${
+            activity.exercise_type === 'prescribed' 
+              ? 'background:#ede9fe;color:#7c3aed' 
+              : 'background:var(--blue-ice);color:var(--blue-mid)'
+          }">
+            ${activity.exercise_type.charAt(0).toUpperCase() + activity.exercise_type.slice(1)}
+          </span>
+        </td>
+        <td style="font-family:'DM Mono',monospace;font-size:0.72rem">${activity.time}</td>
+      </tr>
+    `).join('');
+    
+  } catch (error) {
+    console.error('✗ Failed to load recent activity:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* LOAD WEEKLY COMPLIANCE */
+/* ═══════════════════════════════════════════════════════════════ */
+
+async function loadWeeklyCompliance() {
+  try {
+    const res = await fetch(`${API_BASE}/dashboard/weekly-compliance`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    
+    const container = document.getElementById('weekly-compliance-chart');
+    
+    if (!data.days || data.days.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;color:var(--text-muted);width:100%">
+          No compliance data available
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = data.days.map(day => `
+      <div class="c-bar-wrap">
+        <div class="c-bar prescribed" 
+             style="height:${day.prescribed_percentage}%" 
+             data-tip="${day.day}·Prescribed·${day.prescribed_percentage.toFixed(0)}%">
+        </div>
+        <div class="c-bar self" 
+             style="height:${day.self_initiated_percentage}%" 
+             data-tip="${day.day}·Self·${day.self_initiated_percentage.toFixed(0)}%">
+        </div>
+        <div class="c-bar-day">${day.day}</div>
+      </div>
+    `).join('');
+    
+  } catch (error) {
+    console.error('✗ Failed to load weekly compliance:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* LOAD ALERTS */
+/* ═══════════════════════════════════════════════════════════════ */
+
+async function loadAlerts() {
+  try {
+    const res = await fetch(`${API_BASE}/dashboard/alerts?limit=3`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    
+    const container = document.getElementById('alerts-container');
+    
+    if (!data.alerts || data.alerts.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:20px;color:var(--text-muted)">
+          ✓ No active alerts
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = data.alerts.map(alert => {
+      let bgColor, borderColor, iconColor, iconBg;
+      
+      if (alert.severity === 'danger') {
+        bgColor = '#fef2f2';
+        borderColor = '#fecaca';
+        iconColor = '#dc2626';
+        iconBg = '#fee2e2';
+      } else if (alert.severity === 'warning') {
+        bgColor = '#fff7ed';
+        borderColor = '#fed7aa';
+        iconColor = '#c2410c';
+        iconBg = '#ffedd5';
+      } else {
+        bgColor = '#f0f9ff';
+        borderColor = '#bae6fd';
+        iconColor = '#0369a1';
+        iconBg = '#e0f2fe';
+      }
+      
+      return `
+        <div style="background:${bgColor};border:1px solid ${borderColor};border-left:4px solid ${iconColor};border-radius:12px;padding:12px 16px;display:flex;gap:14px;align-items:flex-start">
+          <div style="width:38px;height:38px;border-radius:10px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${iconColor};font-weight:700">
+            ${alert.severity === 'danger' ? '⚠' : alert.severity === 'warning' ? '!' : 'ℹ'}
+          </div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:0.83rem;color:var(--blue-dark)">${alert.patient_name} — ${alert.alert_type.charAt(0).toUpperCase() + alert.alert_type.slice(1)}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px">${alert.message}</div>
+            ${alert.details ? `<div style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;font-family:'DM Mono',monospace">${alert.details}</div>` : ''}
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="reviewAlert(${alert.id})">Review</button>
+        </div>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('✗ Failed to load alerts:', error);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* REVIEW ALERT */
+/* ��══════════════════════════════════════════════════════════════ */
+
+function reviewAlert(alertId) {
+  showPanel('timeline');
+  showSuccess('Navigated to Activity Timeline');
+}
 /* ─── INITIALIZE ON PAGE LOAD ─── */
 document.addEventListener('DOMContentLoaded', initApp);
 </script>
