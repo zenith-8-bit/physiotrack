@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhysioTrack — Player Movement Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+:root {
+  --bg: #060a0f;
+  --surface: #0d1520;
+  --surface2: #111d2e;
+  --border: #1e3048;
+  --accent: #00e5ff;
+  --accent2: #ff6b35;
+  --accent3: #7c3aed;
+  --text: #e2eaf4;
+  --text-dim: #5a7a99;
+  --green: #00ff88;
+  --yellow: #ffd60a;
+
+  --p1: #00e5ff;
+  --p2: #ff6b35;
+  --p3: #7c3aed;
+  --p4: #00ff88;
+  --p5: #ffd60a;
+  --p6: #ff4081;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── LAYOUT ── */
+.shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(6,10,15,0.9);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  animation: pulse-hex 3s ease-in-out infinite;
+}
+
+@keyframes pulse-hex {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,229,255,0.4); }
+  50% { box-shadow: 0 0 20px 8px rgba(0,229,255,0.2); }
+}
+
+.logo-text { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+.logo-text span { color: var(--accent); }
+
+.badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 2px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+}
+
+nav { display: flex; gap: 8px; }
+nav a {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+nav a:hover, nav a.active { color: var(--accent); background: rgba(0,229,255,0.08); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 0;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+}
+
+.sidebar-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(0,229,255,0.04);
+}
+.upload-zone input {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.upload-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  display: block;
+}
+.upload-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.upload-filename {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  margin-top: 8px;
+  word-break: break-all;
+}
+
+/* Sport selector */
+.sport-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.sport-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: 'Syne', sans-serif;
+}
+.sport-btn:hover { border-color: var(--accent); }
+.sport-btn.active {
+  border-color: var(--accent);
+  background: rgba(0,229,255,0.1);
+  color: var(--accent);
+}
+.sport-btn .sport-emoji { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+.sport-btn .sport-name { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; }
+
+/* Action button */
+.btn-analyze {
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,229,255,0.4); }
+.btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-demo {
+  width: 100%;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+  letter-spacing: 0.05em;
+}
+.btn-demo:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* Progress */
+.progress-wrap {
+  display: none;
+}
+.progress-wrap.active { display: block; }
+.progress-bar-track {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+.progress-status {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+
+/* Stats pills */
+.stats-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.stat-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: 'Space Mono', monospace;
+}
+.stat-pill .val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+.stat-pill .lbl {
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* Player list */
+.player-list { display: flex; flex-direction: column; gap: 6px; }
+.player-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.player-item:hover { border-color: var(--border); filter: brightness(1.1); }
+.player-item.solo { border-color: var(--accent); background: rgba(0,229,255,0.05); }
+.player-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.player-name { font-size: 0.78rem; font-weight: 700; flex: 1; }
+.player-meta {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+/* Tools badges */
+.tools-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+.tool-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  padding: 4px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+}
+.tool-badge.active {
+  background: rgba(124,58,237,0.2);
+  border: 1px solid var(--accent3);
+  color: #a78bfa;
+}
+
+/* Insights */
+.insights-box {
+  background: rgba(0,229,255,0.04);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-line;
+}
+
+/* ── 3D CANVAS AREA ── */
+.viz-area {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  position: relative;
+}
+
+.viz-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.viz-tab {
+  padding: 12px 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: 'Syne', sans-serif;
+}
+.viz-tab:hover { color: var(--text); }
+.viz-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.viz-panel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: none;
+}
+.viz-panel.active { display: block; }
+
+/* 3D canvas */
+#canvas-3d {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Heatmap canvas */
+#canvas-heatmap {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Speed chart */
+#speed-chart-container {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Empty state */
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-dim);
+}
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.3;
+}
+.empty-text {
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+/* Controls overlay */
+.controls-overlay {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+.ctrl-btn {
+  background: rgba(13,21,32,0.9);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Time scrubber */
+.time-scrubber {
+  position: absolute;
+  bottom: 20px;
+  left: 24px;
+  right: 200px;
+  z-index: 10;
+}
+.scrubber-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+.scrubber-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+  transition: width 0.1s;
+}
+.scrubber-thumb {
+  width: 12px; height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(0,229,255,0.6);
+}
+.scrubber-time {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* Speed bars */
+.speed-chart { display: flex; flex-direction: column; gap: 20px; }
+.speed-player { }
+.speed-player-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.speed-bars { display: flex; gap: 2px; align-items: flex-end; height: 80px; }
+.speed-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.2s;
+  min-width: 2px;
+  cursor: pointer;
+}
+.speed-bar:hover { opacity: 0.7; }
+.phase-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.phase-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+.phase-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+}
+
+/* Formation grid */
+#formation-panel { padding: 24px; overflow-y: auto; }
+.formation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.formation-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.formation-card-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+.formation-field {
+  width: 100%;
+  aspect-ratio: 16/9;
+  position: relative;
+  background: rgba(0,50,0,0.3);
+  overflow: hidden;
+}
+.formation-field::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+.formation-player {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Toasts */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.78rem;
+  animation: slideIn 0.3s ease;
+  max-width: 280px;
+}
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--accent2); color: var(--accent2); }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header>
+    <div class="logo">
+      <div class="logo-icon"></div>
+      <span class="logo-text">Physio<span>Track</span></span>
+      <span class="badge">MVP v0.1</span>
+    </div>
+    <nav>
+      <a href="#" class="active">Analyze</a>
+      <a href="#">History</a>
+      <a href="#">Docs</a>
+    </nav>
+  </header>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- Upload -->
+      <div class="sidebar-section">
+        <div class="section-label">Video Input</div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="videoFile" accept=".mp4,.avi,.mov,.mkv,.webm">
+          <span class="upload-icon">🎬</span>
+          <div class="upload-text">Drop video here or click to browse<br>
+            <span style="color:var(--text-dim);font-size:0.65rem">MP4 · MOV · AVI · MKV · max 3 min</span>
+          </div>
+          <div class="upload-filename" id="uploadFilename"></div>
+        </div>
+      </div>
+
+      <!-- Sport -->
+      <div class="sidebar-section">
+        <div class="section-label">Sport Mode</div>
+        <div class="sport-grid">
+          <button class="sport-btn active" data-sport="football">
+            <span class="sport-emoji">⚽</span>
+            <span class="sport-name">FOOTBALL</span>
+          </button>
+          <button class="sport-btn" data-sport="volleyball">
+            <span class="sport-emoji">🏐</span>
+            <span class="sport-name">VOLLEYBALL</span>
+          </button>
+          <button class="sport-btn" data-sport="badminton">
+            <span class="sport-emoji">🏸</span>
+            <span class="sport-name">BADMINTON</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="sidebar-section">
+        <button class="btn-analyze" id="btnAnalyze" disabled>
+          ▶ ANALYZE VIDEO
+        </button>
+        <button class="btn-demo" id="btnDemo">
+          ⚡ LOAD DEMO DATA
+        </button>
+
+        <!-- Progress -->
+        <div class="progress-wrap" id="progressWrap" style="margin-top:14px">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-status" id="progressStatus">Initializing...</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="sidebar-section" id="statsSection" style="display:none">
+        <div class="section-label">Session Stats</div>
+        <div class="stats-row">
+          <div class="stat-pill">
+            <span class="val" id="statPlayers">—</span>
+            <span class="lbl">PLAYERS</span>
+          </div>
+          <div class="stat-pill">
+            <span class="val" id="statDuration">—</span>
+            <span class="lbl">DURATION</span>
+          </div>
+          <div class="stat-pill">
+            <span class="val" id="statFPS">—</span>
+            <span class="lbl">FPS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Players -->
+      <div class="sidebar-section" id="playersSection" style="display:none">
+        <div class="section-label">Tracked Players</div>
+        <div class="player-list" id="playerList"></div>
+      </div>
+
+      <!-- LLM Tools -->
+      <div class="sidebar-section" id="toolsSection" style="display:none">
+        <div class="section-label">LLM-Selected Tools</div>
+        <div class="tools-wrap" id="toolsBadges"></div>
+      </div>
+
+      <!-- Insights -->
+      <div class="sidebar-section" id="insightsSection" style="display:none">
+        <div class="section-label">AI Insights</div>
+        <div class="insights-box" id="insightsBox"></div>
+      </div>
+
+    </div>
+
+    <!-- VIZ AREA -->
+    <div class="viz-area">
+
+      <!-- Tabs -->
+      <div class="viz-tabs">
+        <button class="viz-tab active" data-tab="tab-3d">3D TRAJECTORY</button>
+        <button class="viz-tab" data-tab="tab-heatmap">HEATMAP</button>
+        <button class="viz-tab" data-tab="tab-speed">SPEED PROFILE</button>
+        <button class="viz-tab" data-tab="tab-formation">FORMATION</button>
+      </div>
+
+      <!-- 3D Panel -->
+      <div class="viz-panel active" id="tab-3d">
+        <canvas id="canvas-3d"></canvas>
+
+        <div class="empty-state" id="emptyState3d">
+          <div class="empty-icon">📡</div>
+          <div class="empty-text">Upload a video or load demo data to see 3D player trajectories rendered in real-time</div>
+        </div>
+
+        <div class="time-scrubber" id="timeScrubber" style="display:none">
+          <div class="scrubber-track" id="scrubberTrack">
+            <div class="scrubber-fill" id="scrubberFill" style="width:0%"></div>
+            <div class="scrubber-thumb" id="scrubberThumb" style="left:0%"></div>
+          </div>
+          <div class="scrubber-time" id="scrubberTime">0:00 / 0:00</div>
+        </div>
+
+        <div class="controls-overlay" id="controls3d" style="display:none">
+          <button class="ctrl-btn" id="btnPlay">▶ PLAY</button>
+          <button class="ctrl-btn" id="btnReset">↺ RESET</button>
+          <button class="ctrl-btn" id="btnToggleTrail">TRAIL: ON</button>
+          <button class="ctrl-btn" id="btnAllPlayers">ALL PLAYERS</button>
+        </div>
+      </div>
+
+      <!-- Heatmap Panel -->
+      <div class="viz-panel" id="tab-heatmap">
+        <canvas id="canvas-heatmap"></canvas>
+        <div class="empty-state" id="emptyStateHeatmap">
+          <div class="empty-icon">🌡️</div>
+          <div class="empty-text">Heatmap will show player positional density after analysis</div>
+        </div>
+      </div>
+
+      <!-- Speed Panel -->
+      <div class="viz-panel" id="tab-speed">
+        <div id="speed-chart-container">
+          <div class="empty-state" style="position:relative;height:300px" id="emptyStateSpeed">
+            <div class="empty-icon">⚡</div>
+            <div class="empty-text">Speed profiles will appear here after analysis</div>
+          </div>
+          <div class="speed-chart" id="speedChart" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Formation Panel -->
+      <div class="viz-panel" id="tab-formation">
+        <div id="formation-panel">
+          <div class="empty-state" style="position:relative;height:300px" id="emptyStateFormation">
+            <div class="empty-icon">🗺️</div>
+            <div class="empty-text">Formation snapshots require 4+ players and football/volleyball mode</div>
+          </div>
+          <div class="formation-grid" id="formationGrid" style="display:none"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+const PLAYER_COLORS = ['#00e5ff','#ff6b35','#7c3aed','#00ff88','#ffd60a','#ff4081','#a78bfa','#fb923c'];
+const PHASE_COLORS = { static:'#1e3048', walk:'#0d7a5f', jog:'#d97706', sprint:'#ef4444' };
+
+let currentData = null;
+let selectedPlayers = new Set();
+let trailEnabled = true;
+let isPlaying = false;
+let playProgress = 0;
+let animFrame = null;
+let selectedSport = 'football';
+
+// ════════════════════════════════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════════════════════════════════
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function setProgress(pct, status) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressStatus').textContent = status;
+}
+
+function showSidebar(data) {
+  document.getElementById('statsSection').style.display = 'block';
+  document.getElementById('playersSection').style.display = 'block';
+  document.getElementById('toolsSection').style.display = 'block';
+  document.getElementById('insightsSection').style.display = 'block';
+
+  document.getElementById('statPlayers').textContent = data.player_count;
+  document.getElementById('statDuration').textContent = data.duration.toFixed(1) + 's';
+  document.getElementById('statFPS').textContent = data.fps.toFixed(0);
+
+  // Players
+  const list = document.getElementById('playerList');
+  list.innerHTML = '';
+  data.player_ids.forEach((pid, i) => {
+    const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+    const summary = data.tracking_summary[pid] || {};
+    const div = document.createElement('div');
+    div.className = 'player-item';
+    div.dataset.pid = pid;
+    div.innerHTML = `
+      <div class="player-dot" style="background:${color}"></div>
+      <span class="player-name">Player ${pid}</span>
+      <span class="player-meta">${summary.n_frames || 0} frames</span>
+    `;
+    div.addEventListener('click', () => togglePlayer(pid, div));
+    list.appendChild(div);
+    selectedPlayers.add(pid);
+  });
+
+  // Tools
+  const badges = document.getElementById('toolsBadges');
+  badges.innerHTML = '';
+  (data.selected_tools || []).forEach(t => {
+    const b = document.createElement('div');
+    b.className = 'tool-badge active';
+    b.textContent = t;
+    badges.appendChild(b);
+  });
+
+  // Insights
+  document.getElementById('insightsBox').textContent = data.insights || 'No insights generated.';
+}
+
+function togglePlayer(pid, el) {
+  if (selectedPlayers.has(pid)) {
+    selectedPlayers.delete(pid);
+    el.classList.remove('solo');
+  } else {
+    selectedPlayers.add(pid);
+    el.classList.add('solo');
+  }
+  if (currentData) renderAll();
+}
+
+// ════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════════════════
+document.querySelectorAll('.viz-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.viz-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.viz-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'tab-heatmap' && currentData) renderHeatmap(currentData);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// SPORT SELECTOR
+// ════════════════════════════════════════════════════════════
+document.querySelectorAll('.sport-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedSport = btn.dataset.sport;
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// FILE UPLOAD
+// ════════════════════════════════════════════════════════════
+const videoFile = document.getElementById('videoFile');
+const btnAnalyze = document.getElementById('btnAnalyze');
+
+videoFile.addEventListener('change', () => {
+  if (videoFile.files[0]) {
+    document.getElementById('uploadFilename').textContent = videoFile.files[0].name;
+    btnAnalyze.disabled = false;
+  }
+});
+
+// Drag and drop
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    videoFile.files = dt.files;
+    document.getElementById('uploadFilename').textContent = file.name;
+    btnAnalyze.disabled = false;
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// ANALYZE
+// ════════════════════════════════════════════════════════════
+btnAnalyze.addEventListener('click', async () => {
+  if (!videoFile.files[0]) return;
+
+  btnAnalyze.disabled = true;
+  document.getElementById('progressWrap').classList.add('active');
+  setProgress(2, 'Uploading video...');
+
+  const formData = new FormData();
+  formData.append('video', videoFile.files[0]);
+  formData.append('sport', selectedSport);
+
+  try {
+    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+    const { job_id, error } = await uploadRes.json();
+    if (error) throw new Error(error);
+
+    toast('Video uploaded — tracking started');
+    pollJob(job_id);
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+    btnAnalyze.disabled = false;
+  }
+});
+
+async function pollJob(jobId) {
+  const STATUS_LABELS = {
+    queued: 'Queued...',
+    tracking: 'Running YOLO + ByteTrack...',
+    routing: 'LLM selecting analysis tools...',
+    analyzing: 'Running analysis tools...',
+    generating_insights: 'Generating AI insights...',
+    done: 'Complete!',
+    error: 'Error occurred',
+  };
+
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(`/api/status/${jobId}`);
+      const job = await res.json();
+
+      setProgress(job.progress || 0, STATUS_LABELS[job.status] || job.status);
+
+      if (job.status === 'done') {
+        clearInterval(interval);
+        const resultRes = await fetch(`/api/result/${jobId}`);
+        const data = await resultRes.json();
+        toast('Analysis complete!');
+        loadData(data);
+      } else if (job.status === 'error') {
+        clearInterval(interval);
+        toast('Analysis failed: ' + (job.error || 'unknown'), 'error');
+        btnAnalyze.disabled = false;
+      }
+    } catch(e) {
+      clearInterval(interval);
+      toast('Connection error', 'error');
+    }
+  }, 1500);
+}
+
+// ════════════════════════════════════════════════════════════
+// DEMO
+// ════════════════════════════════════════════════════════════
+document.getElementById('btnDemo').addEventListener('click', async () => {
+  document.getElementById('progressWrap').classList.add('active');
+  setProgress(30, 'Loading demo data...');
+  try {
+    const res = await fetch(`/api/demo/${selectedSport}`);
+    const data = await res.json();
+    setProgress(100, 'Demo loaded!');
+    loadData(data);
+    toast('Demo data loaded for ' + selectedSport);
+  } catch(e) {
+    toast('Demo load failed: ' + e.message, 'error');
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// LOAD & RENDER
+// ════════════════════════════════════════════════════════════
+function loadData(data) {
+  currentData = data;
+  selectedPlayers = new Set(data.player_ids);
+
+  document.getElementById('progressWrap').classList.remove('active');
+  showSidebar(data);
+  renderAll();
+}
+
+function renderAll() {
+  render3D(currentData);
+  if (document.getElementById('tab-heatmap').classList.contains('active')) {
+    renderHeatmap(currentData);
+  }
+  renderSpeedChart(currentData);
+  renderFormation(currentData);
+}
+
+// ════════════════════════════════════════════════════════════
+// THREE.JS 3D TRAJECTORY
+// ════════════════════════════════════════════════════════════
+let scene, camera, renderer, threeInitialized = false;
+let playerMeshes = {};
+let trailLines = {};
+let trajectoryPoints = {};
+let totalTimeSteps = 0;
+
+function initThree() {
+  const canvas = document.getElementById('canvas-3d');
+  const container = canvas.parentElement;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060a0f);
+  scene.fog = new THREE.Fog(0x060a0f, 20, 60);
+
+  camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(0, 8, 14);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.shadowMap.enabled = true;
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0x111827, 2);
+  scene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0x00e5ff, 0.5);
+  dirLight.position.set(5, 10, 5);
+  scene.add(dirLight);
+  const pointLight = new THREE.PointLight(0xff6b35, 0.3, 20);
+  pointLight.position.set(-5, 3, -5);
+  scene.add(pointLight);
+
+  // Field plane
+  const fieldGeo = new THREE.PlaneGeometry(10, 6);
+  const fieldMat = new THREE.MeshLambertMaterial({
+    color: 0x022c22,
+    transparent: true, opacity: 0.8
+  });
+  const field = new THREE.Mesh(fieldGeo, fieldMat);
+  field.rotation.x = -Math.PI / 2;
+  field.receiveShadow = true;
+  scene.add(field);
+
+  // Grid
+  const gridHelper = new THREE.GridHelper(10, 20, 0x1e3048, 0x0d1520);
+  scene.add(gridHelper);
+
+  // Field lines (midfield, etc.)
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x1e4040, linewidth: 1 });
+
+  // Center line
+  const centerGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0.01, -3), new THREE.Vector3(0, 0.01, 3)
+  ]);
+  scene.add(new THREE.Line(centerGeo, lineMat));
+
+  // Orbit controls (manual implementation)
+  setupOrbitControls(canvas);
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth, h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+
+  threeInitialized = true;
+}
+
+// Simple orbit
+let isOrbiting = false, lastMouse = {x:0, y:0};
+let spherical = {theta: 0.3, phi: 0.8, radius: 16};
+
+function setupOrbitControls(canvas) {
+  canvas.addEventListener('mousedown', e => { isOrbiting = true; lastMouse = {x:e.clientX, y:e.clientY}; });
+  canvas.addEventListener('mouseup', () => isOrbiting = false);
+  canvas.addEventListener('mousemove', e => {
+    if (!isOrbiting) return;
+    const dx = e.clientX - lastMouse.x;
+    const dy = e.clientY - lastMouse.y;
+    spherical.theta -= dx * 0.005;
+    spherical.phi = Math.max(0.1, Math.min(1.5, spherical.phi - dy * 0.005));
+    lastMouse = {x:e.clientX, y:e.clientY};
+    updateCamera();
+  });
+  canvas.addEventListener('wheel', e => {
+    spherical.radius = Math.max(5, Math.min(30, spherical.radius + e.deltaY * 0.02));
+    updateCamera();
+  });
+}
+
+function updateCamera() {
+  const x = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+  const y = spherical.radius * Math.cos(spherical.phi);
+  const z = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+  camera.position.set(x, y, z);
+  camera.lookAt(0, 0, 0);
+}
+
+function render3D(data) {
+  if (!threeInitialized) initThree();
+
+  document.getElementById('emptyState3d').style.display = 'none';
+  document.getElementById('timeScrubber').style.display = 'block';
+  document.getElementById('controls3d').style.display = 'flex';
+
+  const traj = data.analysis?.trajectory?.players || {};
+
+  // Clear old
+  Object.values(playerMeshes).forEach(m => scene.remove(m));
+  Object.values(trailLines).forEach(l => scene.remove(l));
+  playerMeshes = {}; trailLines = {}; trajectoryPoints = {};
+
+  const allTs = [];
+  Object.values(traj).forEach(p => allTs.push(...(p.t || [])));
+  totalTimeSteps = allTs.length > 0 ? Math.max(...allTs) : data.duration;
+
+  data.player_ids.forEach((pid, i) => {
+    if (!selectedPlayers.has(pid)) return;
+    const pData = traj[String(pid)] || traj[pid];
+    if (!pData) return;
+
+    const color = new THREE.Color(PLAYER_COLORS[i % PLAYER_COLORS.length]);
+    const xs = pData.x || [];
+    const ys = pData.y || [];
+    const ts = pData.t || [];
+    const speeds = pData.speed || [];
+
+    // Build 3D points: x → field x, y → field z, t → height (time axis)
+    const pts = xs.map((x, idx) => {
+      const fx = (x - 0.5) * 10;       // -5 to 5
+      const fz = (ys[idx] - 0.5) * 6;  // -3 to 3
+      const fy = (ts[idx] / Math.max(totalTimeSteps, 1)) * 6; // time as height
+      return new THREE.Vector3(fx, fy, fz);
+    });
+
+    trajectoryPoints[pid] = { pts, ts, xs, ys, speeds };
+
+    // Player sphere
+    const geo = new THREE.SphereGeometry(0.15, 12, 8);
+    const mat = new THREE.MeshPhongMaterial({
+      color, emissive: color, emissiveIntensity: 0.4,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true;
+    if (pts.length > 0) mesh.position.copy(pts[0]);
+    scene.add(mesh);
+    playerMeshes[pid] = mesh;
+
+    // Glow ring
+    const ringGeo = new THREE.RingGeometry(0.18, 0.25, 16);
+    const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    mesh.add(ring);
+
+    // Trail line (full trajectory)
+    if (pts.length > 1) {
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      const lineMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.35, linewidth: 1 });
+      const line = new THREE.Line(lineGeo, lineMat);
+      scene.add(line);
+      trailLines[pid] = line;
+    }
+  });
+
+  // Start animation
+  playProgress = 0;
+  startRenderLoop();
+}
+
+let lastTime = 0;
+function startRenderLoop() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+
+  function loop(now) {
+    animFrame = requestAnimationFrame(loop);
+
+    if (isPlaying) {
+      const dt = (now - lastTime) / 1000;
+      playProgress = Math.min(1, playProgress + dt / Math.max(totalTimeSteps, 1) * 0.5);
+      if (playProgress >= 1) { isPlaying = false; document.getElementById('btnPlay').textContent = '▶ PLAY'; }
+    }
+    lastTime = now;
+
+    // Update player positions
+    const maxT = Math.max(totalTimeSteps, 1);
+    const currentT = playProgress * maxT;
+
+    Object.entries(trajectoryPoints).forEach(([pid, { pts, ts }]) => {
+      const mesh = playerMeshes[pid];
+      if (!mesh || pts.length === 0) return;
+
+      // Find closest point in time
+      let idx = 0;
+      for (let i = 0; i < ts.length; i++) {
+        if (ts[i] <= currentT) idx = i;
+        else break;
+      }
+      mesh.position.copy(pts[idx]);
+
+      // Pulse
+      const pulse = 1 + 0.08 * Math.sin(now * 0.003 + pid * 1.2);
+      mesh.scale.setScalar(pulse);
+
+      // Update trail opacity based on selection
+      if (trailLines[pid]) {
+        trailLines[pid].material.opacity = trailEnabled ? 0.35 : 0;
+      }
+    });
+
+    // Scrubber
+    document.getElementById('scrubberFill').style.width = (playProgress * 100) + '%';
+    document.getElementById('scrubberThumb').style.left = (playProgress * 100) + '%';
+    const cur = playProgress * totalTimeSteps;
+    document.getElementById('scrubberTime').textContent =
+      `${formatTime(cur)} / ${formatTime(totalTimeSteps)}`;
+
+    renderer.render(scene, camera);
+  }
+
+  lastTime = performance.now();
+  loop(lastTime);
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+// Controls
+document.getElementById('btnPlay').addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  if (playProgress >= 1) playProgress = 0;
+  document.getElementById('btnPlay').textContent = isPlaying ? '⏸ PAUSE' : '▶ PLAY';
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  playProgress = 0; isPlaying = false;
+  document.getElementById('btnPlay').textContent = '▶ PLAY';
+});
+document.getElementById('btnToggleTrail').addEventListener('click', function() {
+  trailEnabled = !trailEnabled;
+  this.textContent = trailEnabled ? 'TRAIL: ON' : 'TRAIL: OFF';
+});
+document.getElementById('btnAllPlayers').addEventListener('click', () => {
+  if (currentData) {
+    selectedPlayers = new Set(currentData.player_ids);
+    document.querySelectorAll('.player-item').forEach(el => el.classList.remove('solo'));
+    renderAll();
+  }
+});
+
+// Scrubber
+document.getElementById('scrubberTrack').addEventListener('click', e => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  playProgress = (e.clientX - rect.left) / rect.width;
+});
+
+// ════════════════════════════════════════════════════════════
+// HEATMAP
+// ════════════════════════════════════════════════════════════
+function renderHeatmap(data) {
+  const canvas = document.getElementById('canvas-heatmap');
+  const heatData = data.analysis?.heatmap?.players;
+  if (!heatData) return;
+
+  document.getElementById('emptyStateHeatmap').style.display = 'none';
+
+  const container = canvas.parentElement;
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#060a0f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const pids = Object.keys(heatData).filter(pid => selectedPlayers.has(parseInt(pid)));
+  const cols = Math.min(pids.length, 3);
+  const rows = Math.ceil(pids.length / cols);
+  const pw = canvas.width / cols;
+  const ph = canvas.height / rows;
+  const pad = 20;
+
+  pids.forEach((pid, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const ox = col * pw + pad;
+    const oy = row * ph + pad;
+    const aw = pw - pad * 2;
+    const ah = ph - pad * 2 - 30;
+
+    const pdata = heatData[pid];
+    const grid = pdata.grid;
+    const gridSize = grid.length;
+    const cellW = aw / gridSize;
+    const cellH = ah / gridSize;
+
+    const color = PLAYER_COLORS[parseInt(pid) - 1] || PLAYER_COLORS[0];
+
+    // Draw cells
+    for (let gy = 0; gy < gridSize; gy++) {
+      for (let gx = 0; gx < gridSize; gx++) {
+        const val = grid[gy][gx];
+        if (val < 0.01) continue;
+        const alpha = Math.min(val * 0.9, 0.9);
+        ctx.fillStyle = hexWithAlpha(color, alpha);
+        ctx.fillRect(ox + gx * cellW, oy + gy * cellH, cellW + 0.5, cellH + 0.5);
+      }
+    }
+
+    // Field border
+    ctx.strokeStyle = '#1e3048';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(ox, oy, aw, ah);
+
+    // Hotspot marker
+    const hs = pdata.hotspot;
+    if (hs) {
+      const hx = ox + hs.grid_x * cellW + cellW / 2;
+      const hy = oy + hs.grid_y * cellH + cellH / 2;
+      ctx.beginPath();
+      ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(hx, hy, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Label
+    ctx.fillStyle = color;
+    ctx.font = '600 13px Syne, sans-serif';
+    ctx.fillText(`Player ${pid}`, ox, oy + ah + 20);
+    ctx.font = '11px Space Mono, monospace';
+    ctx.fillStyle = '#5a7a99';
+    ctx.fillText(`${pdata.total_frames} frames`, ox + 80, oy + ah + 20);
+  });
+}
+
+function hexWithAlpha(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ════════════════════════════════════════════════════════════
+// SPEED CHART
+// ════════════════════════════════════════════════════════════
+function renderSpeedChart(data) {
+  const speedData = data.analysis?.speed_profile?.players;
+  if (!speedData) return;
+
+  document.getElementById('emptyStateSpeed').style.display = 'none';
+  const chart = document.getElementById('speedChart');
+  chart.style.display = 'flex';
+  chart.innerHTML = '';
+
+  const pids = Object.keys(speedData).filter(pid => selectedPlayers.has(parseInt(pid)));
+
+  pids.forEach((pid, i) => {
+    const pdata = speedData[pid];
+    const speeds = pdata.speeds || [];
+    const phases = pdata.phases || [];
+    const color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+
+    const div = document.createElement('div');
+    div.className = 'speed-player';
+
+    const maxSpeed = Math.max(...speeds, 1);
+    const barsHtml = speeds.slice(0, 200).map((s, idx) => {
+      const h = Math.max(2, (s / maxSpeed) * 100);
+      const phase = phases[idx] || 'static';
+      const pColor = PHASE_COLORS[phase];
+      return `<div class="speed-bar" style="height:${h}%;background:${pColor}" title="${phase}: ${s.toFixed(0)}px/s"></div>`;
+    }).join('');
+
+    const pp = pdata.phase_percentages || {};
+    div.innerHTML = `
+      <div class="speed-player-header">
+        <div class="player-dot" style="background:${color}"></div>
+        <span>Player ${pid}</span>
+        <span style="color:var(--text-dim);font-family:'Space Mono',monospace;font-size:0.65rem;margin-left:auto">
+          max: ${pdata.max_speed?.toFixed(0) || 0}px/s · ${pdata.sprint_count || 0} sprints
+        </span>
+      </div>
+      <div class="speed-bars">${barsHtml}</div>
+      <div class="phase-legend">
+        ${Object.entries(PHASE_COLORS).map(([phase, pcolor]) => `
+          <div class="phase-item">
+            <div class="phase-dot" style="background:${pcolor}"></div>
+            <span>${phase} ${pp[phase] ? pp[phase].toFixed(0) + '%' : ''}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    chart.appendChild(div);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// FORMATION
+// ════════════════════════════════════════════════════════════
+function renderFormation(data) {
+  const snapData = data.analysis?.formation_snapshot;
+  if (!snapData || !snapData.snapshots?.length) return;
+
+  document.getElementById('emptyStateFormation').style.display = 'none';
+  const grid = document.getElementById('formationGrid');
+  grid.style.display = 'grid';
+  grid.innerHTML = '';
+
+  snapData.snapshots.forEach(snap => {
+    const card = document.createElement('div');
+    card.className = 'formation-card';
+
+    const positions = snap.positions || {};
+    const pids = Object.keys(positions);
+
+    const playersHtml = pids.map(pid => {
+      const pos = positions[pid];
+      const i = data.player_ids.indexOf(parseInt(pid));
+      const color = PLAYER_COLORS[Math.max(0, i) % PLAYER_COLORS.length];
+      return `<div class="formation-player" style="
+        left:${pos.x * 100}%;
+        top:${pos.y * 100}%;
+        background:${color};
+        color:#060a0f;
+      ">${pid}</div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="formation-card-header">T+${snap.timestamp.toFixed(1)}s · ${snap.player_count} players · spread: ${snap.spread?.toFixed(2) || '—'}</div>
+      <div class="formation-field">${playersHtml}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+initThree();
+
+// Start render loop even before data (so camera orbit works)
+(function emptyLoop() {
+  requestAnimationFrame(emptyLoop);
+  if (threeInitialized && !currentData) renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>
